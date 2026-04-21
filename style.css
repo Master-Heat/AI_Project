@@ -1,0 +1,173 @@
+/* Font Definition */
+@font-face {
+  font-family: "iAWriter";
+  src: url("assets/iAWriterDuoV.ttf") format("truetype-variations");
+  font-weight: 100 900; /* Variable font supports weight range */
+}
+/* General */
+:root {
+  font-size: 16px;
+  --dark-square: #515151;
+  --light-square: #fff;
+  --board-size: 400px;
+  --square-size: calc(var(--board-size) / 8);
+}
+* {
+  margin: 0;
+  font-family: "iAWriter";
+}
+body {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f2f2f2;
+  padding: 0px 100px;
+}
+.button {
+  display: block;
+  width: 200px;
+  padding: 6px;
+  background-color: rgb(255, 255, 255);
+  color: black;
+  border: 2px solid rgb(189, 189, 189);
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center;
+}
+.button:hover {
+  background-color: black;
+  color: white;
+  border: none;
+}
+/* Game Homepage */
+.homepage {
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+.logo{
+    height: 150px;
+}
+.homepage.buttons {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+.homepage.hero {
+  flex: 2.5;
+  height: 100%;
+}
+/* Game Board */
+.game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+#chessboard {
+  width: 400px;
+}
+.player-info {
+  width: 400px;
+  padding: 15px;
+  background-color: #333;
+  color: white;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 18px;
+  font-weight: bold;
+  border: 3px solid #555;
+  transition: border-color 0.3s;
+}
+.player-info.active {
+  border-color: #ffd700;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+.player-name {
+  flex: 1;
+}
+.player-details {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+.player-color {
+  font-size: 24px;
+}
+.player-time {
+  min-width: 60px;
+  text-align: right;
+  font-family: "Courier New", monospace;
+  font-size: 20px;
+  color: #ffd700;
+}
+.result {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 40px 60px;
+  border-radius: 10px;
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+  display: none;
+  z-index: 1000;
+  min-width: 300px;
+  white-space: pre-wrap;
+}
+.result.show {
+  display: block;
+}
+.result.show {
+  display: block;
+}
+/* HERO SECTION */
+.hero {
+  justify-content: center;
+  align-items: center;
+}
+#hero-board {
+  display: grid;
+  grid-template-columns: repeat(8, var(--square-size));
+  grid-template-rows: repeat(8, var(--square-size));
+  width: var(--board-size);
+  height: var(--board-size);
+}
+.square {
+  width: var(--square-size);
+  height: var(--square-size);
+
+}
+.white {
+  background-color: var(--light-square);
+}
+.square.dark {
+  background-color: var(--dark-square);
+}
+.piece {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  animation: wave-float 2s ease-in-out infinite;
+}
+@keyframes wave-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}

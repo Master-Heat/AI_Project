@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="setup-container">
+        <h1>♟ Chess Game Setup ♟</h1>
+
+        <div class="config-section">
+            <label class="config-label">Time Control</label>
+            <div class="options-group">
+                <div class="option">
+                    <input type="radio" id="time1" name="timeControl" value="60" checked>
+                    <label for="time1">1 min</label>
+                </div>
+                <div class="option">
+                    <input type="radio" id="time3" name="timeControl" value="180">
+                    <label for="time3">3 min</label>
+                </div>
+                <div class="option">
+                    <input type="radio" id="time10" name="timeControl" value="600">
+                    <label for="time10">10 min</label>
+                </div>
+            </div>
+            <div class="info-text">Choose time per player</div>
+        </div>
+
+        <div class="config-section">
+            <label class="config-label">AI Color (Player 1)</label>
+            <div class="options-group">
+                <div class="option">
+                    <input type="radio" id="aiBlack" name="aiColor" value="black" checked>
+                    <label for="aiBlack">Black</label>
+                </div>
+                <div class="option">
+                    <input type="radio" id="aiWhite" name="aiColor" value="white">
+                    <label for="aiWhite">White</label>
+                </div>
+                <div class="option">
+                    <input type="radio" id="aiRandom" name="aiColor" value="random">
+                    <label for="aiRandom">Random</label>
+                </div>
+            </div>
+            <div class="info-text">Choose AI color (Human gets the other)</div>
+        </div>
+
+        <button class="play-button" onclick="startGame()">▶ PLAY</button>
+    </div>
+
+    <script>
+        function startGame() {
+            // Get selected values
+            const timeControl = document.querySelector('input[name="timeControl"]:checked').value;
+            const aiColor = document.querySelector('input[name="aiColor"]:checked').value;
+
+            // Determine actual colors
+            let finalAiColor, finalHumanColor;
+            if (aiColor === 'random') {
+                // Random: 50% chance for each
+                finalAiColor = Math.random() < 0.5 ? 'black' : 'white';
+                finalHumanColor = finalAiColor === 'black' ? 'white' : 'black';
+            } else {
+                finalAiColor = aiColor;
+                finalHumanColor = aiColor === 'black' ? 'white' : 'black';
+            }
+
+            // Store configuration in localStorage
+            const config = {
+                timeControl: parseInt(timeControl),
+                aiColor: finalAiColor,
+                humanColor: finalHumanColor
+            };
+
+            localStorage.setItem('chessGameConfig', JSON.stringify(config));
+
+            // Redirect to game page
+            window.location.href = 'board.html';
+        }
+    </script>
+</body>
+</html>
