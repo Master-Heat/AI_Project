@@ -1,206 +1,230 @@
 var board = null;
-var game = new Chess(); // Create a new chess game instance
+var game = new Chess();
 
-// Load configuration from localStorage
+// ─── Load Config ─────────────────────────────────────────────
 var gameConfig = {
-  timeControl: 180,  // Default 3 minutes
-  aiColor: 'black',  // Default AI as black
-  humanColor: 'white' // Default human as white
+  playerCount: 1,
+  timeControl: 180,
+  playerColor: 'black',
+  player1Color: 'white',
+  player2Color: 'black',
+  aiColor: 'white',
+  humanColor: 'black'
 };
 
-// Check if configuration exists in localStorage
 var savedConfig = localStorage.getItem('chessGameConfig');
 if (savedConfig) {
-  gameConfig = JSON.parse(savedConfig);
-  // Clear the config after loading so it doesn't persist
+  var parsed = JSON.parse(savedConfig);
+  gameConfig = parsed;
   localStorage.removeItem('chessGameConfig');
 }
 
-// Setup the UI based on configuration
-function setupGameUI () {
-  // AI is always at top, Human is always at bottom
-  var playerTopDiv = document.getElementById('playerTop');
-  var playerBottomDiv = document.getElementById('playerBottom');
-  
-  playerTopDiv.querySelector('.player-name').textContent = 'AI';
-  playerBottomDiv.querySelector('.player-name').textContent = 'You';
-  
-  // Set color symbols based on AI color
-  if (gameConfig.aiColor === 'black') {
-    playerTopDiv.querySelector('.player-color').textContent = '♞'; // Black piece for AI at top
-    playerBottomDiv.querySelector('.player-color').textContent = '♙'; // White piece for Human at bottom
-  } else {
-    playerTopDiv.querySelector('.player-color').textContent = '♙'; // White piece for AI at top
-    playerBottomDiv.querySelector('.player-color').textContent = '♞'; // Black piece for Human at bottom
-  }
-}
-
-// Timer variables
+// ─── Timer Setup ─────────────────────────────────────────────
 var whiteTime = gameConfig.timeControl;
 var blackTime = gameConfig.timeControl;
 var timerInterval = null;
 
-// Format time as MM:SS
-function formatTime (seconds) {
+// ─── UI Setup ────────────────────────────────────────────────
+function setupGameUI() {
+  var playerTopDiv = document.getElementById('playerTop');
+  var playerBottomDiv = document.getElementById('playerBottom');
+  
+  if (gameConfig.playerCount === 1) {
+    // 1-player mode (vs AI)
+    playerTopDiv.querySelector('.player-name').textContent = 'AI';
+    playerBottomDiv.querySelector('.player-name').textContent = 'You';
+    
+    if (gameConfig.aiColor === 'black') {
+      playerTopDiv.querySelector('.player-color').textContent = '♞';
+      playerBottomDiv.querySelector('.player-color').textContent = '♙';
+    } else {
+      playerTopDiv.querySelector('.player-color').textContent = '♙';
+      playerBottomDiv.querySelector('.player-color').textContent = '♞';
+    }
+  } else {
+    // 2-player mode
+    // Player 1 is at bottom (white), Player 2 is at top (black)
+    playerTopDiv.querySelector('.player-name').textContent = 'Player 2';
+    playerBottomDiv.querySelector('.player-name').textContent = 'Player 1';
+    
+    if (gameConfig.player2Color === 'black') {
+      playerTopDiv.querySelector('.player-color').textContent = '♞';
+      playerBottomDiv.querySelector('.player-color').textContent = '♙';
+    } else {
+      playerTopDiv.querySelector('.player-color').textContent = '♙';
+      playerBottomDiv.querySelector('.player-color').textContent = '♞';
+    }
+  }
+}
+
+function formatTime(seconds) {
   var mins = Math.floor(seconds / 60);
   var secs = seconds % 60;
   return (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
 }
 
-// Update player display styling
-function updatePlayerDisplay () {
-  var playerTop = document.getElementById('playerTop');
-  var playerBottom = document.getElementById('playerBottom');
-  
-  playerTop.classList.remove('active');
-  playerBottom.classList.remove('active');
-  
-  // Top is always AI, Bottom is always Human
-  // But piece colors vary based on AI color
-  
-  if (gameConfig.aiColor === 'black') {
-    // AI (black) at top, Human (white) at bottom
-    if (game.turn() === 'w') {
-      playerBottom.classList.add('active');
-    } else {
-      playerTop.classList.add('active');
-    }
+function updateTimerDisplay() {
+  if (gameConfig.playerCount === 1) {
+    // 1-player mode: show AI and human time
+    var aiTime = gameConfig.aiColor === 'white' ? whiteTime : blackTime;
+    var humanTime = gameConfig.aiColor === 'white' ? blackTime : whiteTime;
+    document.querySelector('#playerTop .player-time').textContent = formatTime(aiTime);
+    document.querySelector('#playerBottom .player-time').textContent = formatTime(humanTime);
   } else {
-    // AI (white) at top, Human (black) at bottom
-    if (game.turn() === 'w') {
-      playerTop.classList.add('active');
-    } else {
-      playerBottom.classList.add('active');
-    }
+    // 2-player mode: Player 1 is white (bottom), Player 2 is determined by player2Color
+    var player2Time = gameConfig.player2Color === 'black' ? blackTime : whiteTime;
+    var player1Time = gameConfig.player2Color === 'black' ? whiteTime : blackTime;
+    document.querySelector('#playerTop .player-time').textContent = formatTime(player2Time);
+    document.querySelector('#playerBottom .player-time').textContent = formatTime(player1Time);
   }
 }
 
-// Update timer display
-function updateTimerDisplay () {
-  if (gameConfig.aiColor === 'black') {
-    // AI (black) at top, Human (white) at bottom
-    document.querySelector('#playerTop .player-time').textContent = formatTime(blackTime);
-    document.querySelector('#playerBottom .player-time').textContent = formatTime(whiteTime);
-  } else {
-    // AI (white) at top, Human (black) at bottom
-    document.querySelector('#playerTop .player-time').textContent = formatTime(whiteTime);
-    document.querySelector('#playerBottom .player-time').textContent = formatTime(blackTime);
-  }
-}
-
-// Start the game timer
-function startTimer () {
+function startTimer() {
   stopTimer();
-  
-  timerInterval = setInterval(function () {
+  timerInterval = setInterval(function() {
     if (game.turn() === 'w') {
       whiteTime--;
-      if (whiteTime <= 0) {
-        whiteTime = 0;
-        stopTimer();
-        endGameByTimeout('Black');
-      }
+      if (whiteTime <= 0) { whiteTime = 0; stopTimer(); endGameByTimeout('Black'); }
     } else {
       blackTime--;
-      if (blackTime <= 0) {
-        blackTime = 0;
-        stopTimer();
-        endGameByTimeout('White');
-      }
+      if (blackTime <= 0) { blackTime = 0; stopTimer(); endGameByTimeout('White'); }
     }
     updateTimerDisplay();
   }, 1000);
 }
 
-// Stop the timer
-function stopTimer () {
-  if (timerInterval) {
-    clearInterval(timerInterval);
-    timerInterval = null;
-  }
+function stopTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
 }
 
-// End game by timeout
-function endGameByTimeout (winner) {
+function endGameByTimeout(winner) {
+  stopTimer();
   var resultDiv = document.querySelector('.result');
-  var resultText = document.querySelector('#resultText');
-  resultText.textContent = 'Time\'s up!\n' + winner + ' wins!';
+  var resultText = document.getElementById('resultText');
+  var winnerLabel;
+  
+  if (gameConfig.playerCount === 1) {
+    winnerLabel = (winner === 'White' && gameConfig.humanColor === 'white') || 
+                  (winner === 'Black' && gameConfig.humanColor === 'black') 
+                  ? 'You win!' : 'AI wins!';
+  } else {
+    winnerLabel = winner === 'White' ? 'Player 1 wins!' : 'Player 2 wins!';
+  }
+  resultText.textContent = "Time's up!\n" + winnerLabel;
   resultDiv.classList.add('show');
 }
 
-function onDragStart (source, piece, position, orientation) {
-  // Do not pick up pieces if the game is over
-  if (game.game_over()) return false;
-
-  // Only pick up pieces for the side to move
-  if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
-      (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
-    return false;
+function updatePlayerDisplay() {
+  var playerTop = document.getElementById('playerTop');
+  var playerBottom = document.getElementById('playerBottom');
+  playerTop.classList.remove('active');
+  playerBottom.classList.remove('active');
+  
+  if (gameConfig.playerCount === 1) {
+    // 1-player mode: highlight AI or human based on turn
+    if (game.turn() === gameConfig.aiColor[0]) playerTop.classList.add('active');
+    else playerBottom.classList.add('active');
+  } else {
+    // 2-player mode: highlight based on player color
+    // Player 1 (bottom) is white, Player 2 (top) is black
+    if (game.turn() === 'w') playerBottom.classList.add('active');
+    else playerTop.classList.add('active');
   }
 }
 
-function onDrop (source, target) {
-  // See if the move is legal
-  var move = game.move({
-    from: source,
-    to: target,
-    promotion: 'q' // NOTE: always promote to a queen for example simplicity
-  });
+function updateStatus() {
+  if (!game.game_over()) return;
+  stopTimer();
+  var resultDiv = document.querySelector('.result');
+  var resultText = document.getElementById('resultText');
+  var status = '';
 
-  // Illegal move
+  if (game.in_checkmate()) {
+    var loserColor = game.turn();
+    var winnerColor = loserColor === 'w' ? 'black' : 'white';
+    var winnerLabel;
+    
+    if (gameConfig.playerCount === 1) {
+      winnerLabel = winnerColor === gameConfig.humanColor ? 'You win! 🎉' : 'AI wins!';
+    } else {
+      winnerLabel = winnerColor === 'white' ? 'Player 1 wins! 🎉' : 'Player 2 wins! 🎉';
+    }
+    status = 'Checkmate!\n' + winnerLabel;
+  } else if (game.in_draw()) {
+    status = 'Game Over\nDraw!';
+  }
+  resultText.textContent = status;
+  resultDiv.classList.add('show');
+}
+
+// ─── Board Handlers ──────────────────────────────────────────
+function onDragStart(source, piece) {
+  if (game.game_over()) return false;
+  
+  if (gameConfig.playerCount === 1) {
+    // 1-player mode: only allow human moves
+    if (game.turn() === gameConfig.aiColor[0]) return false;
+  }
+  
+  // Prevent moving opponent pieces
+  if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+      (game.turn() === 'b' && piece.search(/^w/) !== -1)) return false;
+}
+
+function onDrop(source, target) {
+  // Safety check: in 1-player mode, don't allow moves on AI's turn
+  if (gameConfig.playerCount === 1 && game.turn() === gameConfig.aiColor[0]) return 'snapback';
+
+  var move = game.move({ from: source, to: target, promotion: 'q' });
   if (move === null) return 'snapback';
 
   updateStatus();
   updatePlayerDisplay();
   
-  // Only start timer if game is not over
+  // Handle next turn
   if (!game.game_over()) {
     startTimer();
+    if (gameConfig.playerCount === 1) {
+      makeAIMove(); // 1-player mode: trigger AI
+    }
   }
 }
 
-// Update the board position after the piece snap
-// for castling, en passant, pawn promotion
-function onSnapEnd () {
+function onSnapEnd() {
   board.position(game.fen());
 }
 
-function updateStatus () {
-  var status = '';
-  var moveColor = (game.turn() === 'b') ? 'Black' : 'White';
-  var resultDiv = document.querySelector('.result');
-  var resultText = document.querySelector('#resultText');
+// ─── AI TRIGGER FUNCTION ─────────────────────────────────────
+// This function connects script.js to agent.js
+function makeAIMove() {
+  if (game.game_over()) return;
+  // Double check it's actually AI's turn
+  if (game.turn() !== gameConfig.aiColor[0]) return;
 
-  // Checkmate?
-  if (game.in_checkmate()) {
-    var winner = moveColor === 'Black' ? 'White' : 'Black';
-    status = moveColor + ' is in checkmate!\n' + winner + ' wins!';
-    resultText.textContent = status;
-    resultDiv.classList.add('show');
-    stopTimer();
-  }
-  // Draw?
-  else if (game.in_draw()) {
-    status = 'Game Over\nDrawn Position';
-    resultText.textContent = status;
-    resultDiv.classList.add('show');
-    stopTimer();
-  }
-  // Game still on
-  else {
-    status = moveColor + ' to move';
-    if (game.in_check()) {
-      status += ', ' + moveColor + ' is in check';
+  // Small delay so the browser can render the human's move first
+  setTimeout(function() {
+    // Call the function from agent.js
+    var bestMove = findBestMove(); 
+
+    if (bestMove) {
+      game.move(bestMove);
+      board.position(game.fen());
+      updateStatus();
+      updatePlayerDisplay();
+
+      if (!game.game_over()) {
+        startTimer();
+      }
     }
-    resultDiv.classList.remove('show');
-    console.log(status);
-  }
+  }, 300);
 }
 
+// ─── Initialize ──────────────────────────────────────────────
+var boardOrientation = gameConfig.playerCount === 1 ? gameConfig.humanColor : 'white'; // In 2-player, player 1 is white
 var config = {
   draggable: true,
   position: 'start',
-  orientation: gameConfig.aiColor === 'black' ? 'white' : 'black',
+  orientation: boardOrientation,
   onDragStart: onDragStart,
   onDrop: onDrop,
   onSnapEnd: onSnapEnd
@@ -212,3 +236,8 @@ updateStatus();
 updateTimerDisplay();
 updatePlayerDisplay();
 startTimer();
+
+// If AI is white (1-player mode only), it moves first
+if (gameConfig.playerCount === 1 && gameConfig.aiColor === 'white') {
+  makeAIMove();
+}

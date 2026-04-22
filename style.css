@@ -7,11 +7,9 @@
 /* General */
 :root {
   font-size: 16px;
-  --dark-square: #515151;
-  --light-square: #fff;
-  --board-size: 400px;
+  --light-square: #ffffff;
+  --board-size: 350px;
   --square-size: calc(var(--board-size) / 8);
-
 }
 * {
   margin: 0;
@@ -22,13 +20,12 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #f2f2f2;
-  padding: 0px 100px;
+  background-color: #fafafa;
+  padding: 0px 200px;
 }
 .button {
- box-sizing: border-box ;
   display: block;
-  width: 200px;
+  width: 350px;
   padding: 6px;
   background-color: rgb(255, 255, 255);
   color: black;
@@ -40,17 +37,23 @@ body {
 .button:hover {
   background-color: black;
   color: white;
-  border: 2px solid black;
-  
+  border-color: black;
 }
+.button.btn-selected {
+  /* Add custom styling for selected buttons */
+}
+.button.btn-unselected {
+  /* Add custom styling for unselected buttons */
+}
+
 /* Game Homepage */
 .homepage {
   display: flex;
   height: 100%;
   width: 100%;
 }
-.logo{
-    height: 150px;
+.logo {
+  height: 150px;
 }
 .homepage.buttons {
   flex: 1;
@@ -64,6 +67,79 @@ body {
 .homepage.hero {
   flex: 2.5;
   height: 100%;
+}
+.play-button.expanded{
+    background-color: white;
+}
+.play-button.expanded:hover {
+  background-color: white;
+  color: black;
+  border-color: rgb(189, 189, 189);
+  cursor: default;
+}
+.play-button.expanded .button{
+    background-color: black;
+    border: 2px solid black;
+    color: white;
+}
+.play-config {
+  display: none;
+  position: relative;
+}
+.close-button{
+  position: absolute !important;
+  top: 0px;
+  right: 0px;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0 !important;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.play-button.expanded .play-button-text {
+  display: none;
+}
+.play-button.expanded .play-config {
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    align-items: start;
+    gap: 10px;
+}
+.play-config-title {
+  font-weight: bold;
+}
+.play-config-items{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: 5px;
+}
+.config-item{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: 2px;
+}
+.config-input{
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 3px;
+}
+.config-item.small .config-input .config-button{
+    width: 50%;
+}
+.config-item .config-input .config-button{
+    width: 33.33%;
 }
 /* Game Board */
 .game-container {
@@ -149,13 +225,14 @@ body {
 .square {
   width: var(--square-size);
   height: var(--square-size);
-
 }
-.white {
+.square.white {
   background-color: var(--light-square);
 }
 .square.dark {
-  background-color: var(--dark-square);
+  background-image: url('assets/dark-square-black.jpg');
+  background-size: cover;
+  background-position: center;
 }
 .piece {
   width: 100%;

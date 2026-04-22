@@ -1,85 +1,202 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chess</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="setup-container">
-        <h1>♟ Chess Game Setup ♟</h1>
-
-        <div class="config-section">
-            <label class="config-label">Time Control</label>
-            <div class="options-group">
-                <div class="option">
-                    <input type="radio" id="time1" name="timeControl" value="60" checked>
-                    <label for="time1">1 min</label>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chess - Home</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="homepage">
+      <div class="homepage buttons">
+        <img class="logo" src="assets/logo.png" />
+        <div class="button play-button">
+          <div class="play-button-text" onclick="openPlayConfig()">Play a Game</div>
+          <div class="play-config" id="playConfig">
+            <button class="close-button button" onclick="closePlayConfig()">✕</button>
+            <div class="play-config-title">Game Configuration:</div>
+            <div class="play-config-items">
+              <!-- Number of Players -->
+              <div class="config-item small">
+                <label class="config-title">Players:</label>
+                <div class="config-input">
+                  <button class="button config-button player-count" data-value="1">1 Player</button>
+                  <button class="button config-button player-count" data-value="2">2 Players</button>
                 </div>
-                <div class="option">
-                    <input type="radio" id="time3" name="timeControl" value="180">
-                    <label for="time3">3 min</label>
+              </div>
+              <!-- Player Color(s) -->
+              <div class="config-item">
+                <label class="config-title" id="player1ColorLabel">Player Color:</label>
+                <div class="config-input color-options">
+                  <button class="button config-button color-button" data-value="black">Black</button>
+                  <button class="button config-button color-button" data-value="white">White</button>
+                  <button class="button config-button color-button" data-value="random">Random</button>
                 </div>
-                <div class="option">
-                    <input type="radio" id="time10" name="timeControl" value="600">
-                    <label for="time10">10 min</label>
+              </div>
+              <!-- Player 2 Color (only visible in 2player mode) -->
+              <div class="config-item" id="player2ColorItem" style="display: none;">
+                <label class="config-title">Player #2 Color:</label>
+                <div class="config-input color-options">
+                  <button class="button config-button color-button" data-value="black">Black</button>
+                  <button class="button config-button color-button" data-value="white">White</button>
+                  <button class="button config-button color-button" data-value="random">Random</button>
                 </div>
-            </div>
-            <div class="info-text">Choose time per player</div>
+              </div>
+              <!-- Time Control -->
+              <div class="config-item">
+                <label class="config-title">Time Control</label>
+                <div class="config-input">
+                  <button class="button config-button  time-button" data-value="1">1 Minute</button>
+                  <button class="button config-button  time-button" data-value="3">3 Minutes</button>
+                  <button class="button config-button  time-button" data-value="10">10 Minutes</button>
+                </div>
+              </div>
+           </div>
+            <button class="button play-start-button">Start Game</button>
+          </div>
         </div>
-
-        <div class="config-section">
-            <label class="config-label">AI Color (Player 1)</label>
-            <div class="options-group">
-                <div class="option">
-                    <input type="radio" id="aiBlack" name="aiColor" value="black" checked>
-                    <label for="aiBlack">Black</label>
-                </div>
-                <div class="option">
-                    <input type="radio" id="aiWhite" name="aiColor" value="white">
-                    <label for="aiWhite">White</label>
-                </div>
-                <div class="option">
-                    <input type="radio" id="aiRandom" name="aiColor" value="random">
-                    <label for="aiRandom">Random</label>
-                </div>
-            </div>
-            <div class="info-text">Choose AI color (Human gets the other)</div>
-        </div>
-
-        <button class="play-button" onclick="startGame()">▶ PLAY</button>
+        <div class="button evaluate-button">Evaluate a Game</div>
+        <div class="button game-rules-button">Game Rules</div>
+      </div>
+      <div class="homepage hero">
+        <div id="hero-board"></div>
+      </div>
     </div>
-
+    <script src="hero.js"></script>
     <script>
-        function startGame() {
-            // Get selected values
-            const timeControl = document.querySelector('input[name="timeControl"]:checked').value;
-            const aiColor = document.querySelector('input[name="aiColor"]:checked').value;
+      let playerCount = 1;
+      let playerColor = 'black';
+      let player2Color = 'white';
+      let timeControl = '3';
 
-            // Determine actual colors
-            let finalAiColor, finalHumanColor;
-            if (aiColor === 'random') {
-                // Random: 50% chance for each
-                finalAiColor = Math.random() < 0.5 ? 'black' : 'white';
-                finalHumanColor = finalAiColor === 'black' ? 'white' : 'black';
-            } else {
-                finalAiColor = aiColor;
-                finalHumanColor = aiColor === 'black' ? 'white' : 'black';
-            }
+      function openPlayConfig() {
+        const playButton = document.querySelector('.play-button');
+        playButton.classList.add('expanded');
+      }
 
-            // Store configuration in localStorage
-            const config = {
-                timeControl: parseInt(timeControl),
-                aiColor: finalAiColor,
-                humanColor: finalHumanColor
-            };
+      function closePlayConfig() {
+        const playButton = document.querySelector('.play-button');
+        playButton.classList.remove('expanded');
+      }
 
-            localStorage.setItem('chessGameConfig', JSON.stringify(config));
+      function setPlayerCount(count) {
+        playerCount = count;
+        
+        // Update button states
+        document.querySelectorAll('.player-count').forEach(btn => {
+          const btnCount = parseInt(btn.dataset.value);
+          btn.classList.remove('btn-selected', 'btn-unselected');
+          btn.classList.add(btnCount === count ? 'btn-selected' : 'btn-unselected');
+        });
 
-            // Redirect to game page
-            window.location.href = 'board.html';
+        // Update label and visibility
+        const player1Label = document.getElementById('player1ColorLabel');
+        const player2Item = document.getElementById('player2ColorItem');
+        
+        if (count === 1) {
+          player1Label.textContent = 'Player Color:';
+          player2Item.style.display = 'none';
+        } else {
+          player1Label.textContent = 'Player #1 Color:';
+          player2Item.style.display = 'block';
         }
+      }
+
+      function setPlayerColor(color) {
+        playerColor = color;
+        
+        // Update button states for player 1 color
+        document.querySelectorAll('.config-item:not(#player2ColorItem) .color-button').forEach(btn => {
+          btn.classList.remove('btn-selected', 'btn-unselected');
+          btn.classList.add(btn.dataset.value === color ? 'btn-selected' : 'btn-unselected');
+        });
+      }
+
+      function setPlayer2Color(color) {
+        player2Color = color;
+        
+        // Update button states for player 2 color
+        document.querySelectorAll('#player2ColorItem .color-button').forEach(btn => {
+          btn.classList.remove('btn-selected', 'btn-unselected');
+          btn.classList.add(btn.dataset.value === color ? 'btn-selected' : 'btn-unselected');
+        });
+      }
+
+      function setTimeControl(time) {
+        timeControl = time;
+        
+        // Update button states
+        document.querySelectorAll('.time-button').forEach(btn => {
+          btn.classList.remove('btn-selected', 'btn-unselected');
+          btn.classList.add(btn.dataset.value === time ? 'btn-selected' : 'btn-unselected');
+        });
+      }
+
+      function startGame() {
+        // Create game configuration object
+        let gameConfig = {
+          playerCount: playerCount,
+          timeControl: parseInt(timeControl) * 60 // Convert minutes to seconds
+        };
+
+        if (playerCount === 1) {
+          // 1-player mode (vs AI)
+          gameConfig.playerColor = playerColor;
+          // Determine AI and human colors
+          if (playerColor === 'random') {
+            gameConfig.humanColor = Math.random() < 0.5 ? 'black' : 'white';
+            gameConfig.aiColor = gameConfig.humanColor === 'black' ? 'white' : 'black';
+          } else {
+            gameConfig.humanColor = playerColor;
+            gameConfig.aiColor = playerColor === 'black' ? 'white' : 'black';
+          }
+        } else {
+          // 2-player mode
+          // Player 1 selects a color, Player 2 gets the opposite
+          let player1Color = playerColor;
+          if (player1Color === 'random') {
+            player1Color = Math.random() < 0.5 ? 'black' : 'white';
+          }
+          let player2ColorComputed = player1Color === 'black' ? 'white' : 'black';
+          
+          gameConfig.player1Color = player1Color;
+          gameConfig.player2Color = player2ColorComputed;
+        }
+
+        // Save to localStorage
+        localStorage.setItem('chessGameConfig', JSON.stringify(gameConfig));
+        
+        // Redirect to board
+        window.location.href = 'board.html';
+      }
+
+      // Initialize with default values
+      window.addEventListener('DOMContentLoaded', () => {
+        // Initialize player count
+        document.querySelectorAll('.player-count').forEach(btn => {
+          btn.classList.add(parseInt(btn.dataset.value) === playerCount ? 'btn-selected' : 'btn-unselected');
+          btn.addEventListener('click', (e) => setPlayerCount(parseInt(e.target.dataset.value)));
+        });
+
+        // Initialize player 1 color
+        document.querySelectorAll('.config-item:not(#player2ColorItem) .color-button').forEach(btn => {
+          btn.classList.add(btn.dataset.value === playerColor ? 'btn-selected' : 'btn-unselected');
+          btn.addEventListener('click', (e) => setPlayerColor(e.target.dataset.value));
+        });
+
+        // Initialize player 2 color
+        document.querySelectorAll('#player2ColorItem .color-button').forEach(btn => {
+          btn.classList.add(btn.dataset.value === player2Color ? 'btn-selected' : 'btn-unselected');
+          btn.addEventListener('click', (e) => setPlayer2Color(e.target.dataset.value));
+        });
+
+        // Initialize time control
+        document.querySelectorAll('.time-button').forEach(btn => {
+          btn.classList.add(btn.dataset.value === timeControl ? 'btn-selected' : 'btn-unselected');
+          btn.addEventListener('click', (e) => setTimeControl(e.target.dataset.value));
+        });
+
+        // Initialize Start Game button
+        document.querySelector('.play-start-button').addEventListener('click', startGame);
+      });
     </script>
-</body>
-</html>

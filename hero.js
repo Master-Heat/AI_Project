@@ -30,7 +30,6 @@ for (let i = 0; i < 64; i++) {
         piece.alt = startingPosition[i];
         piece.classList.add('piece');
 
-        // Wave delay based on column and row so it ripples diagonally
         const delay = (col + row) * 0.15;
         piece.style.animationDelay = `${delay}s`;
 
