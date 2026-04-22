@@ -49,6 +49,18 @@ var knightTable = [
   -50,-40,-30,-30,-30,-30,-40,-50
 ];
 
+
+var kingTableEndgame = [
+  -50, -30, -30, -30, -30, -30, -30, -50,
+  -30, -10,   0,   0,   0,   0, -10, -30,
+  -30,   0,  20,  30,  30,  20,   0, -30,
+  -30,   0,  30,  40,  40,  30,   0, -30,
+  -30,   0,  30,  40,  40,  30,   0, -30,
+  -30,   0,  20,  30,  30,  20,   0, -30,
+  -30, -10,   0,   0,   0,   0, -10, -30,
+  -50, -30, -30, -30, -30, -30, -30, -50
+];
+
 var bishopTable = [
   -20,-10,-10,-10,-10,-10,-10,-20,
   -10,  0,  0,  0,  0,  0,  0,-10,
@@ -102,6 +114,14 @@ function getPiecePositionBonus(pieceType, color, row, col) {
     ? (row * 8 + col)
     : ((7 - row) * 8 + col);
 
+    //? add change to use king's end game logic in the end game
+    if (isEndgame()) {
+      return kingTableEndgame[index];
+    } else {
+      return kingTable[index];
+    }
+  
+
   switch (pieceType) {
     case 'p': return pawnTable[index];
     case 'n': return knightTable[index];
@@ -114,6 +134,19 @@ function getPiecePositionBonus(pieceType, color, row, col) {
 }
 
 function evaluateBoard() {
+
+
+   if (game.in_checkmate()) {
+    // If it is White's turn and they are in mate, Black wins (Score: -10000)
+    // If it is Black's turn and they are in mate, White wins (Score: +10000)
+    return game.turn() === 'w' ? -10000 : 10000;
+  }
+  
+  if (game.in_draw() || game.in_stalemate() || game.in_threefold_repetition()) {
+    return 0; // Draws are neutral
+  }
+
+
   var boardArray = game.board();
   var score      = 0;
 
@@ -211,4 +244,23 @@ function findBestMove() {
 
   console.log('AI: Best move → ' + bestMove + ' (score: ' + bestScore + ')');
   return bestMove;
+}
+
+
+
+
+function isEndgame() {
+  var boardArray = game.board();
+  var totalMaterial = 0;
+
+  for (var row = 0; row < 8; row++) {
+    for (var col = 0; col < 8; col++) {
+      if (boardArray[row][col]) {
+        totalMaterial += pieceValues[boardArray[row][col].type];
+      }
+    }
+  }
+  // If total material (excluding Kings) is low, it's the endgame
+  // Typically, if total value is < 1500-2000
+  return totalMaterial < 2000; 
 }
