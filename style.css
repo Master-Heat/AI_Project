@@ -11,6 +11,7 @@
   --light-square: #fff;
   --board-size: 400px;
   --square-size: calc(var(--board-size) / 8);
+  --btn-back-color: black;
 }
 * {
   margin: 0;
@@ -25,6 +26,7 @@ body {
   padding: 0px 100px;
 }
 .button {
+ box-sizing: border-box ;
   display: block;
   width: 200px;
   padding: 6px;
@@ -38,7 +40,8 @@ body {
 .button:hover {
   background-color: black;
   color: white;
-  border: none;
+  border: 2px solid black;
+  
 }
 /* Game Homepage */
 .homepage {
