@@ -1,6 +1,8 @@
 /**
  * agent.js
  * ──────────────────────────────────────────────────────────────
+ * Chess AI using Minimax + Alpha-Beta Pruning
+ * ──────────────────────────────────────────────────────────────
  * Dependencies (must load before this file):
  *   - chess.js        → game object
  *   - script.js       → gameConfig object
@@ -133,10 +135,11 @@ function evaluateBoard() {
 // ═══════════════════════════════════════════════════════════════
 
 function getAIDepth() {
-  var time = gameConfig.timeControl;
-  if (time <= 60)  return 2; // 1 min  → depth 2
-  if (time <= 180) return 3; // 3 min  → depth 3
-  return 3;                  // 10 min → depth 3 (capped for browser)
+  return 2;
+  // var time = gameConfig.timeControl;
+  // if (time <= 60)  return 2; // 1 min
+  // if (time <= 180) return 3; // 3 min
+  // return 3;                  // 10 min (capped for browser performance)
 }
 
 // ═══════════════════════════════════════════════════════════════
