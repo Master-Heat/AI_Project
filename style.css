@@ -11,7 +11,7 @@
   --light-square: #fff;
   --board-size: 400px;
   --square-size: calc(var(--board-size) / 8);
-  --btn-back-color: black;
+
 }
 * {
   margin: 0;
