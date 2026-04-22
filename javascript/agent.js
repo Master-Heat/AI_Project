@@ -112,6 +112,19 @@ function getPiecePositionBonus(pieceType, color, row, col) {
 }
 
 function evaluateBoard() {
+
+
+   if (game.in_checkmate()) {
+    // If it is White's turn and they are in mate, Black wins (Score: -10000)
+    // If it is Black's turn and they are in mate, White wins (Score: +10000)
+    return game.turn() === 'w' ? -10000 : 10000;
+  }
+  
+  if (game.in_draw() || game.in_stalemate() || game.in_threefold_repetition()) {
+    return 0; // Draws are neutral
+  }
+
+  
   var boardArray = game.board();
   var score      = 0;
 
