@@ -1,12 +1,16 @@
 /**
  * agent.js
- * Chess AI Engine
- * ----------------
- * Uses Minimax with Alpha-Beta Pruning
- * Evaluation: Material + Piece-Square Tables
- * Includes: Hardcoded Opening Book + Dynamic Depth based on Time Control
+ * ──────────────────────────────────────────────────────────────
+ * Dependencies (must load before this file):
+ *   - chess.js        → game object
+ *   - script.js       → gameConfig object
+ *   - openingBook.js  → getOpeningMove(), resetOpening()
+ * ──────────────────────────────────────────────────────────────
  */
-//  1. PIECE VALUES & POSITION TABLES
+
+// ═══════════════════════════════════════════════════════════════
+//  PIECE VALUES
+// ═══════════════════════════════════════════════════════════════
 
 var pieceValues = {
   p: 100,
@@ -16,6 +20,10 @@ var pieceValues = {
   q: 900,
   k: 20000
 };
+
+// ═══════════════════════════════════════════════════════════════
+//  POSITION TABLES
+// ═══════════════════════════════════════════════════════════════
 
 var pawnTable = [
    0,  0,  0,  0,  0,  0,  0,  0,
@@ -83,60 +91,14 @@ var kingTable = [
    20, 30, 10,  0,  0, 10, 30, 20
 ];
 
-//  2. OPENING BOOK LOGIC
-
-var openingLibrary = [];
-var ecoDatabase = {};
-
-// Fetch the opening book from your local file
-async function loadDatabases() {
-  try {
-    // Load moves.json (Sequential lines)
-    const movesRes = await fetch('moves.json');
-    openingLibrary = await movesRes.json();
-
-    console.log("Chess Databases Loaded Successfully");
-  } catch (err) {
-    console.error("Error loading chess databases:", err);
-  }
-}
-
-// Call the loader
-loadDatabases();
-
-function getOpeningMove() {
-  var history = game.history();
-  // Clean FEN: Only take pieces, turn, and castling (ignores move clocks)
-  var currentFEN = game.fen().split(' ').slice(0, 3).join(' ');
-
-  // 1. Check moves.json first (Exact line matching)
-  if (Array.isArray(openingLibrary) && openingLibrary.length > 0) {
-    var match = openingLibrary.find(line => 
-      line.moves.length > history.length && 
-      history.every((move, i) => move === line.moves[i])
-    );
-    if (match) {
-      console.log("Book (Line): " + match.name);
-      return match.moves[history.length];
-    }
-  }}
-
-// function getOpeningMove() {
-//   var currentFEN = game.fen();
-//   var bookMoves = openingBook[currentFEN];
-
-//   if (bookMoves && bookMoves.length > 0) {
-//     var randomIndex = Math.floor(Math.random() * bookMoves.length);
-//     return bookMoves[randomIndex];
-//   }
-
-//   return null;
-// }
-
-//  3. EVALUATION FUNCTION
+// ═══════════════════════════════════════════════════════════════
+//  EVALUATION
+// ═══════════════════════════════════════════════════════════════
 
 function getPiecePositionBonus(pieceType, color, row, col) {
-  var index = color === 'w' ? (row * 8 + col) : ((7 - row) * 8 + col);
+  var index = color === 'w'
+    ? (row * 8 + col)
+    : ((7 - row) * 8 + col);
 
   switch (pieceType) {
     case 'p': return pawnTable[index];
@@ -145,65 +107,44 @@ function getPiecePositionBonus(pieceType, color, row, col) {
     case 'r': return rookTable[index];
     case 'q': return queenTable[index];
     case 'k': return kingTable[index];
-    default: return 0;
+    default:  return 0;
   }
 }
 
 function evaluateBoard() {
-
-  if (game.in_checkmate()) {
-    // If it is White's turn and they are in mate, Black wins (Score: -10000)
-    // If it is Black's turn and they are in mate, White wins (Score: +10000)
-    return game.turn() === 'w' ? -10000 : 10000;
-  }
-  
-  if (game.in_draw() || game.in_stalemate() || game.in_threefold_repetition()) {
-    return 0; // Draws are neutral
-  }
-
   var boardArray = game.board();
-  var score = 0;
+  var score      = 0;
 
   for (var row = 0; row < 8; row++) {
     for (var col = 0; col < 8; col++) {
       var piece = boardArray[row][col];
       if (!piece) continue;
-
-      var value = pieceValues[piece.type] 
+      var value = pieceValues[piece.type]
                 + getPiecePositionBonus(piece.type, piece.color, row, col);
-
-      if (piece.color === 'w') {
-        score += value;
-      } else {
-        score -= value;
-      }
+      score += piece.color === 'w' ? value : -value;
     }
   }
 
   return score;
 }
 
-//  4. MINIMAX ALGORITHM
+// ═══════════════════════════════════════════════════════════════
+//  DEPTH CONTROL
+// ═══════════════════════════════════════════════════════════════
 
-/* Determine search depth based on the time control loaded from script.js */
 function getAIDepth() {
-  // Access the global variable set in script.js
-  // var time = gameConfig.timeControl;
-
-  return 2;
-  // if (time <= 60) {
-  //   return 2; // 1 Minute: Fast and shallow
-  // } else if (time <= 180) {
-  //   return 3; // 3 Minutes: Standard depth
-  // } else {
-  //   return 4; // 10 Minutes: Deep search
-  // }
+  var time = gameConfig.timeControl;
+  if (time <= 60)  return 2; // 1 min  → depth 2
+  if (time <= 180) return 3; // 3 min  → depth 3
+  return 3;                  // 10 min → depth 3 (capped for browser)
 }
 
+// ═══════════════════════════════════════════════════════════════
+//  MINIMAX + ALPHA-BETA PRUNING
+// ═══════════════════════════════════════════════════════════════
+
 function minimax(depth, alpha, beta, isMaximizing) {
-  if (depth === 0 || game.game_over()) {
-    return evaluateBoard();
-  }
+  if (depth === 0 || game.game_over()) return evaluateBoard();
 
   var moves = game.moves();
 
@@ -214,7 +155,7 @@ function minimax(depth, alpha, beta, isMaximizing) {
       var score = minimax(depth - 1, alpha, beta, false);
       game.undo();
       maxScore = Math.max(maxScore, score);
-      alpha = Math.max(alpha, score);
+      alpha    = Math.max(alpha, score);
       if (beta <= alpha) break;
     }
     return maxScore;
@@ -225,52 +166,46 @@ function minimax(depth, alpha, beta, isMaximizing) {
       var score = minimax(depth - 1, alpha, beta, true);
       game.undo();
       minScore = Math.min(minScore, score);
-      beta = Math.min(beta, score);
+      beta     = Math.min(beta, score);
       if (beta <= alpha) break;
     }
     return minScore;
   }
 }
 
-//  5. MAIN ENTRY POINT
+// ═══════════════════════════════════════════════════════════════
+//  MAIN ENTRY POINT
+// ═══════════════════════════════════════════════════════════════
 
 function findBestMove() {
-  // 1. Check Opening Book
+  // 1. Try opening book first (from openingBook.js)
   var bookMove = getOpeningMove();
-  if (bookMove) {
-    console.log("AI: Playing Book Move -> " + bookMove);
-    return bookMove;
-  }
+  if (bookMove) return bookMove;
 
-  // 2. Setup Minimax
-  var moves = game.moves();
-  var bestMove = null;
-  var isAIWhite = (gameConfig.aiColor === 'white');
+  // 2. Fall back to Minimax
+  var moves     = game.moves();
+  var bestMove  = null;
+  var isAIWhite = gameConfig.aiColor === 'white';
   var bestScore = isAIWhite ? -Infinity : Infinity;
-  
-  // Get dynamic depth based on time control
-  var depth = getAIDepth(); 
-  console.log("AI: Calculating at Depth " + depth + "...");
+  var depth     = getAIDepth();
 
-  // 3. Loop through moves
+  console.log('AI: Calculating at depth ' + depth + '...');
+
   for (var i = 0; i < moves.length; i++) {
     game.move(moves[i]);
     var score = minimax(depth - 1, -Infinity, Infinity, !isAIWhite);
     game.undo();
 
-    if (isAIWhite) {
-      if (score > bestScore) {
-        bestScore = score;
-        bestMove = moves[i];
-      }
-    } else {
-      if (score < bestScore) {
-        bestScore = score;
-        bestMove = moves[i];
-      }
+    if (isAIWhite && score > bestScore) {
+      bestScore = score;
+      bestMove  = moves[i];
+    }
+    if (!isAIWhite && score < bestScore) {
+      bestScore = score;
+      bestMove  = moves[i];
     }
   }
 
-  console.log("AI: Best Move Found -> " + bestMove + " (Score: " + bestScore + ")");
+  console.log('AI: Best move → ' + bestMove + ' (score: ' + bestScore + ')');
   return bestMove;
 }
