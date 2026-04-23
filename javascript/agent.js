@@ -1,12 +1,12 @@
 /**
  * agent.js
  * ──────────────────────────────────────────────────────────────
- * Chess AI using:
- * 1. Iterative Deepening
- * 2. Alpha-Beta Pruning
- * 3. Transposition Table
- * 4. Move Ordering (MVV-LVA)
- * 5. Quiescence Search (depth-limited)
+ * Chess AI using Minimax + Alpha-Beta Pruning
+ * ──────────────────────────────────────────────────────────────
+ * Dependencies:
+ *   - chess.js        → game object
+ *   - script.js       → gameConfig object
+ *   - openingBook.js  → getOpeningMove(), resetOpening()
  * ──────────────────────────────────────────────────────────────
  */
 
@@ -105,68 +105,7 @@ var kingEndgameTable = [
 ];
 
 // ═══════════════════════════════════════════════════════════════
-//  TRANSPOSITION TABLE
-// ═══════════════════════════════════════════════════════════════
-
-var transpositionTable = {};
-var TT_SIZE_LIMIT      = 200000;
-var ttEntryCount       = 0;
-var TT_EXACT           = 0;
-var TT_ALPHA           = 1;
-var TT_BETA            = 2;
-
-function ttClear() {
-  transpositionTable = {};
-  ttEntryCount       = 0;
-}
-
-function ttGet(key, depth, alpha, beta) {
-  var entry = transpositionTable[key];
-  if (!entry || entry.depth < depth) return null;
-  if (entry.type === TT_EXACT) return entry.score;
-  if (entry.type === TT_ALPHA && entry.score <= alpha) return alpha;
-  if (entry.type === TT_BETA  && entry.score >= beta)  return beta;
-  return null;
-}
-
-function ttSet(key, depth, score, type, bestMove) {
-  if (ttEntryCount >= TT_SIZE_LIMIT) ttClear();
-  transpositionTable[key] = {
-    depth:    depth,
-    score:    score,
-    type:     type,
-    bestMove: bestMove
-  };
-  ttEntryCount++;
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  TIME MANAGEMENT
-// ═══════════════════════════════════════════════════════════════
-
-var searchStartTime = 0;
-var searchTimeLimit = 0;
-
-function getTimeLimit() {
-  var time = gameConfig.timeControl;
-  if (time <= 60)  return 1500; // 1.5s for 1 min
-  if (time <= 180) return 3000; // 3.0s for 3 min
-  return 5000;                  // 5.0s for 10 min
-}
-
-function getMaxDepth() {
-  var time = gameConfig.timeControl;
-  if (time <= 60)  return 4; // 1 min
-  if (time <= 180) return 5; // 3 min
-  return 6;                  // 10 min
-}
-
-function isTimeUp() {
-  return (Date.now() - searchStartTime) >= searchTimeLimit;
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  GAME PHASE
+//  GAME PHASE DETECTION
 // ═══════════════════════════════════════════════════════════════
 
 function isEndgame() {
@@ -191,6 +130,7 @@ function getPiecePositionBonus(pieceType, color, row, col) {
   var index = color === 'w'
     ? (row * 8 + col)
     : ((7 - row) * 8 + col);
+
   switch (pieceType) {
     case 'p': return pawnTable[index];
     case 'n': return knightTable[index];
@@ -205,10 +145,12 @@ function getPiecePositionBonus(pieceType, color, row, col) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  EVALUATION
+//  EVALUATION FUNCTION
+//  Fast version - no Chess() object creation inside
 // ═══════════════════════════════════════════════════════════════
 
 function evaluateBoard() {
+  // ── Checkmate / Draw ──────────────────────────────────────────
   if (game.in_checkmate()) {
     return game.turn() === 'b' ? 999999 : -999999;
   }
@@ -219,12 +161,15 @@ function evaluateBoard() {
   var whiteBishops = 0;
   var blackBishops = 0;
 
+  // ── Material + Position ───────────────────────────────────────
   for (var row = 0; row < 8; row++) {
     for (var col = 0; col < 8; col++) {
       var piece = board[row][col];
       if (!piece) continue;
+
       var value = pieceValues[piece.type]
                 + getPiecePositionBonus(piece.type, piece.color, row, col);
+
       if (piece.color === 'w') {
         score += value;
         if (piece.type === 'b') whiteBishops++;
@@ -235,8 +180,13 @@ function evaluateBoard() {
     }
   }
 
+  // ── Bishop Pair Bonus ─────────────────────────────────────────
   if (whiteBishops >= 2) score += 30;
   if (blackBishops >= 2) score -= 30;
+
+  // ── Check Penalty ─────────────────────────────────────────────
+  // Small bonus — just enough to prefer giving check
+  // over an equal non-checking move
   if (game.in_check()) {
     score += game.turn() === 'b' ? 30 : -30;
   }
@@ -245,166 +195,116 @@ function evaluateBoard() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  QUIESCENCE SEARCH (depth-limited to max 4 extra plies)
+//  MOVE ORDERING  (fast version - no game.move() calls)
 // ═══════════════════════════════════════════════════════════════
 
-var MAX_QUIESCENCE_DEPTH = 4;
-
-function quiescence(alpha, beta, isMaximizing, qdepth) {
-  // Hard limit on quiescence depth
-  if (qdepth <= 0 || isTimeUp()) return evaluateBoard();
-
-  var standPat = evaluateBoard();
-
-  // Stand-pat pruning
-  if (isMaximizing) {
-    if (standPat >= beta)  return beta;
-    if (standPat > alpha)  alpha = standPat;
-  } else {
-    if (standPat <= alpha) return alpha;
-    if (standPat < beta)   beta = standPat;
-  }
-
-  // Only look at captures
-  var moves = game.moves({ verbose: true }).filter(function(m) {
-    return m.captured;
-  });
-
-  // Order captures by MVV-LVA (best captures first)
-  moves.sort(function(a, b) {
-    var aScore = (pieceValues[a.captured] || 0) * 10
-               - (pieceValues[a.piece]    || 0);
-    var bScore = (pieceValues[b.captured] || 0) * 10
-               - (pieceValues[b.piece]    || 0);
-    return bScore - aScore;
-  });
-
-  for (var i = 0; i < moves.length; i++) {
-    if (isTimeUp()) break;
-
-    game.move(moves[i].san);
-    // Recurse with qdepth - 1
-    var score = quiescence(alpha, beta, !isMaximizing, qdepth - 1);
-    game.undo();
-
-    if (isMaximizing) {
-      if (score > alpha) alpha = score;
-      if (alpha >= beta) break;
-    } else {
-      if (score < beta)  beta = score;
-      if (beta <= alpha) break;
-    }
-  }
-
-  return isMaximizing ? alpha : beta;
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  MOVE ORDERING
-// ═══════════════════════════════════════════════════════════════
-
-function scoreMoveForOrdering(move, ttBestMove) {
-  // TT best move from previous iteration gets highest priority
-  if (ttBestMove && move.san === ttBestMove) return 2000000;
-
+/**
+ * Score a move using ONLY the move object data.
+ * No game.move() / game.undo() calls here.
+ * This keeps ordering fast enough for depth 3-4.
+ *
+ * Priority:
+ * 1. Queen promotion with capture  → highest
+ * 2. Captures by MVV-LVA           → most valuable victim first
+ * 3. Queen promotion (no capture)  → big positional gain
+ * 4. Other promotions              → still good
+ * 5. Castling                      → good positional move
+ * 6. Normal moves                  → base score 0
+ *
+ * Checkmate is handled SEPARATELY in findBestMove()
+ * by checking move 1 of the ordered list instantly.
+ * The minimax scores handle deeper checkmates naturally.
+ */
+function scoreMoveForOrdering(move) {
   var score = 0;
 
-  // Captures (MVV-LVA)
+  // ── Captures (MVV-LVA) ────────────────────────────────────────
   if (move.captured) {
     var victimValue   = pieceValues[move.captured] || 0;
     var attackerValue = pieceValues[move.piece]    || 0;
+    // Capturing a queen with a pawn scores much higher than
+    // capturing a pawn with a queen
     score += 10 * victimValue - attackerValue + 5000;
   }
 
-  // Promotions
+  // ── Promotions ────────────────────────────────────────────────
   if (move.promotion) {
     score += pieceValues[move.promotion] + 4000;
   }
 
-  // Castling
+  // ── Castling ──────────────────────────────────────────────────
   if (move.flags) {
-    if (move.flags.indexOf('k') !== -1) score += 300;
-    if (move.flags.indexOf('q') !== -1) score += 300;
+    if (move.flags.indexOf('k') !== -1) score += 300; // Kingside
+    if (move.flags.indexOf('q') !== -1) score += 300; // Queenside
   }
 
   return score;
 }
 
-function getOrderedMoves(ttBestMove) {
+function getOrderedMoves() {
   var moves = game.moves({ verbose: true });
+
+  // Sort by score descending (best moves first)
   moves.sort(function(a, b) {
-    return scoreMoveForOrdering(b, ttBestMove) -
-           scoreMoveForOrdering(a, ttBestMove);
+    return scoreMoveForOrdering(b) - scoreMoveForOrdering(a);
   });
+
+  // Return SAN strings for game.move() compatibility
   return moves.map(function(m) { return m.san; });
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  MINIMAX + ALPHA-BETA + TRANSPOSITION TABLE
+//  DEPTH CONTROL
+// ═══════════════════════════════════════════════════════════════
+
+function getAIDepth() {
+  var time = gameConfig.timeControl;
+  if (time <= 60)  return 2; // 1 min
+  if (time <= 180) return 3; // 3 min
+  return 3;                  // 10 min
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  MINIMAX + ALPHA-BETA
 // ═══════════════════════════════════════════════════════════════
 
 function minimax(depth, alpha, beta, isMaximizing) {
-  if (isTimeUp()) return evaluateBoard();
-
+  // ── Terminal checks ───────────────────────────────────────────
   if (game.in_checkmate()) {
     return isMaximizing ? -999999 - depth : 999999 + depth;
   }
   if (game.in_draw() || game.in_stalemate()) return 0;
+  if (depth === 0) return evaluateBoard();
 
-  // At depth 0 run quiescence with depth limit
-  if (depth === 0) {
-    return quiescence(alpha, beta, isMaximizing, MAX_QUIESCENCE_DEPTH);
-  }
-
-  // Transposition table lookup
-  var ttKey    = game.fen();
-  var ttScore  = ttGet(ttKey, depth, alpha, beta);
-  if (ttScore !== null) return ttScore;
-
-  var ttEntry    = transpositionTable[ttKey];
-  var ttBestMove = ttEntry ? ttEntry.bestMove : null;
-  var moves      = getOrderedMoves(ttBestMove);
-  var bestMove   = null;
-  var origAlpha  = alpha;
+  var moves = getOrderedMoves();
 
   if (isMaximizing) {
     var maxScore = -Infinity;
     for (var i = 0; i < moves.length; i++) {
-      if (isTimeUp()) break;
       game.move(moves[i]);
       var score = minimax(depth - 1, alpha, beta, false);
       game.undo();
-      if (score > maxScore) { maxScore = score; bestMove = moves[i]; }
-      if (score > alpha)    alpha = score;
+      if (score > maxScore) maxScore = score;
+      if (score > alpha)    alpha    = score;
       if (beta <= alpha)    break;
     }
-    var type = maxScore <= origAlpha ? TT_ALPHA
-             : maxScore >= beta      ? TT_BETA
-             : TT_EXACT;
-    ttSet(ttKey, depth, maxScore, type, bestMove);
     return maxScore;
-
   } else {
     var minScore = Infinity;
     for (var i = 0; i < moves.length; i++) {
-      if (isTimeUp()) break;
       game.move(moves[i]);
       var score = minimax(depth - 1, alpha, beta, true);
       game.undo();
-      if (score < minScore) { minScore = score; bestMove = moves[i]; }
-      if (score < beta)     beta = score;
+      if (score < minScore) minScore = score;
+      if (score < beta)     beta     = score;
       if (beta <= alpha)    break;
     }
-    var type = minScore <= origAlpha ? TT_ALPHA
-             : minScore >= beta      ? TT_BETA
-             : TT_EXACT;
-    ttSet(ttKey, depth, minScore, type, bestMove);
     return minScore;
   }
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  ITERATIVE DEEPENING (no aspiration windows - too slow here)
+//  MAIN ENTRY POINT
 // ═══════════════════════════════════════════════════════════════
 
 function findBestMove() {
@@ -412,88 +312,46 @@ function findBestMove() {
   var bookMove = getOpeningMove();
   if (bookMove) return bookMove;
 
-  // 2. Setup
-  searchStartTime = Date.now();
-  searchTimeLimit = getTimeLimit();
-  var maxDepth    = getMaxDepth();
-  var isAIWhite   = gameConfig.aiColor === 'white';
+  // 2. Minimax
+  var moves     = getOrderedMoves();
+  var bestMoves = [];
+  var isAIWhite = gameConfig.aiColor === 'white';
+  var bestScore = isAIWhite ? -Infinity : Infinity;
+  var depth     = getAIDepth();
 
-  ttClear();
+  console.log('AI: Depth ' + depth + ' | Moves: ' + moves.length);
 
-  var bestMoveOverall  = null;
-  var bestScoreOverall = isAIWhite ? -Infinity : Infinity;
+  for (var i = 0; i < moves.length; i++) {
+    game.move(moves[i]);
 
-  console.log('AI: Iterative deepening | Max depth: ' + maxDepth +
-              ' | Time: ' + searchTimeLimit + 'ms');
-
-  // 3. Search depth 1, 2, 3... up to maxDepth or time limit
-  for (var depth = 1; depth <= maxDepth; depth++) {
-    if (isTimeUp()) {
-      console.log('AI: Time up before depth ' + depth);
-      break;
-    }
-
-    var moves       = getOrderedMoves(bestMoveOverall);
-    var bestMoves   = [];
-    var bestScore   = isAIWhite ? -Infinity : Infinity;
-    var completed   = true;
-
-    for (var i = 0; i < moves.length; i++) {
-      if (isTimeUp()) {
-        completed = false;
-        break;
-      }
-
-      game.move(moves[i]);
-
-      // Instant checkmate
-      if (game.in_checkmate()) {
-        game.undo();
-        console.log('AI: Checkmate in 1 → ' + moves[i]);
-        return moves[i];
-      }
-
-      var score = minimax(depth - 1, -Infinity, Infinity, !isAIWhite);
+    // Instant checkmate — no need to search further
+    if (game.in_checkmate()) {
       game.undo();
-
-      if (isAIWhite) {
-        if (score > bestScore) {
-          bestScore = score;
-          bestMoves = [moves[i]];
-        } else if (score === bestScore) {
-          bestMoves.push(moves[i]);
-        }
-      } else {
-        if (score < bestScore) {
-          bestScore = score;
-          bestMoves = [moves[i]];
-        } else if (score === bestScore) {
-          bestMoves.push(moves[i]);
-        }
-      }
+      console.log('AI: Checkmate in 1 → ' + moves[i]);
+      return moves[i];
     }
 
-    if (completed && bestMoves.length > 0) {
-      // Only update if this depth completed fully
-      bestMoveOverall  = bestMoves[Math.floor(Math.random() * bestMoves.length)];
-      bestScoreOverall = bestScore;
-      var elapsed      = Date.now() - searchStartTime;
-      console.log('AI: Depth ' + depth + ' ✓ | ' + elapsed + 'ms | ' +
-                  bestMoveOverall + ' (score: ' + bestScoreOverall + ')');
+    var score = minimax(depth - 1, -Infinity, Infinity, !isAIWhite);
+    game.undo();
 
-      // Checkmate found
-      if (Math.abs(bestScoreOverall) > 900000) {
-        console.log('AI: Forced mate → ' + bestMoveOverall);
-        break;
+    if (isAIWhite) {
+      if (score > bestScore) {
+        bestScore = score;
+        bestMoves = [moves[i]];
+      } else if (score === bestScore) {
+        bestMoves.push(moves[i]);
       }
     } else {
-      console.log('AI: Depth ' + depth + ' incomplete → using depth ' +
-                  (depth - 1) + ' result.');
-      break;
+      if (score < bestScore) {
+        bestScore = score;
+        bestMoves = [moves[i]];
+      } else if (score === bestScore) {
+        bestMoves.push(moves[i]);
+      }
     }
   }
 
-  var total = Date.now() - searchStartTime;
-  console.log('AI: Final → ' + bestMoveOverall + ' | ' + total + 'ms');
-  return bestMoveOverall;
+  var chosen = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+  console.log('AI: Chose → ' + chosen + ' (score: ' + bestScore + ')');
+  return chosen;
 }
