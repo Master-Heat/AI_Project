@@ -22,7 +22,6 @@ var savedConfig = localStorage.getItem('chessGameConfig');
 if (savedConfig) {
   var parsed = JSON.parse(savedConfig);
 
-  // Resolve random color here, once, before anything runs
   if (parsed.aiColor === 'random') {
     parsed.aiColor = Math.random() < 0.5 ? 'white' : 'black';
   }
@@ -33,11 +32,43 @@ if (savedConfig) {
 }
 
 // ═══════════════════════════════════════════════════════════════
+//  WEB WORKER SETUP
+// ═══════════════════════════════════════════════════════════════
+
+var aiWorker        = new Worker('javascript/worker.js');
+var aiMoveStartTime = 0;
+
+aiWorker.onmessage = function(e) {
+  var bestMove = e.data;
+
+  var endTime   = Date.now();
+  var timeSpent = Math.ceil((endTime - aiMoveStartTime) / 1000);
+
+  if (gameConfig.aiColor === 'white') {
+    whiteTime -= timeSpent;
+  } else {
+    blackTime -= timeSpent;
+  }
+
+  if (bestMove) {
+    game.move(bestMove);
+    board.position(game.fen());
+    updateStatus();
+    updatePlayerDisplay();
+    updateTimerDisplay();
+
+    if (!game.game_over()) {
+      startTimer();
+    }
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════
 //  TIMERS
 // ═══════════════════════════════════════════════════════════════
 
-var whiteTime    = gameConfig.timeControl;
-var blackTime    = gameConfig.timeControl;
+var whiteTime     = gameConfig.timeControl;
+var blackTime     = gameConfig.timeControl;
 var timerInterval = null;
 
 function formatTime(seconds) {
@@ -123,9 +154,9 @@ function updatePlayerDisplay() {
   playerBottom.classList.remove('active');
 
   if (game.turn() === gameConfig.aiColor[0]) {
-    playerTop.classList.add('active');    // AI always on top
+    playerTop.classList.add('active');
   } else {
-    playerBottom.classList.add('active'); // Human always on bottom
+    playerBottom.classList.add('active');
   }
 }
 
@@ -158,17 +189,12 @@ function updateStatus() {
 
 function onDragStart(source, piece) {
   if (game.game_over()) return false;
-
-  // Block dragging on AI's turn
   if (game.turn() === gameConfig.aiColor[0]) return false;
-
-  // Block dragging the wrong color pieces
   if (game.turn() === 'w' && piece.search(/^b/) !== -1) return false;
   if (game.turn() === 'b' && piece.search(/^w/) !== -1) return false;
 }
 
 function onDrop(source, target) {
-  // Extra safety: reject if AI's turn
   if (game.turn() === gameConfig.aiColor[0]) return 'snapback';
 
   var move = game.move({
@@ -201,32 +227,29 @@ function makeAIMove() {
   if (game.game_over()) return;
   if (game.turn() !== gameConfig.aiColor[0]) return;
 
-  // Small delay so the browser renders the human's move first
   setTimeout(function() {
-    var startTime = Date.now(); // Record start time
-    
 
-    var bestMove = findBestMove(); // Defined in agent.js
-
-    var endTime = Date.now(); // calculate the time while finding the best move 
-    var timeSpent = Math.ceil((endTime - startTime) / 1000);
-    if (gameConfig.aiColor === "white"){
-      whiteTime -= timeSpent
-    }else{
-      blackTime -=timeSpent
-    }
-
-    if (bestMove) {
-      game.move(bestMove);
+    // 1. Try opening book first — fast, stays on main thread
+    var bookMove = getOpeningMove();
+    if (bookMove) {
+      game.move(bookMove);
       board.position(game.fen());
       updateStatus();
       updatePlayerDisplay();
       updateTimerDisplay();
-
-      if (!game.game_over()) {
-        startTimer();
-      }
+      if (!game.game_over()) startTimer();
+      return;
     }
+
+    // 2. No book move — send to worker for minimax
+    stopTimer();
+    aiMoveStartTime = Date.now();
+
+    aiWorker.postMessage({
+      fen:        game.fen(),
+      gameConfig: gameConfig
+    });
+
   }, 300);
 }
 
@@ -237,7 +260,7 @@ function makeAIMove() {
 var config = {
   draggable:   true,
   position:    'start',
-  orientation: gameConfig.humanColor, // Human always at bottom
+  orientation: gameConfig.humanColor,
   onDragStart: onDragStart,
   onDrop:      onDrop,
   onSnapEnd:   onSnapEnd
@@ -251,19 +274,12 @@ updateStatus();
 //  WAIT FOR OPENING BOOK TO LOAD BEFORE STARTING
 // ═══════════════════════════════════════════════════════════════
 
-/**
- * We poll every 100ms until openingBook.js has finished
- * fetching and parsing all ECO JSON files.
- * This prevents the AI from skipping the book on move 1.
- */
 var startInterval = setInterval(function() {
   if (openingBookLoaded) {
     clearInterval(startInterval);
 
-    // Fresh shuffle and reset for this game
     resetOpening();
 
-    // Reset timers to correct values
     whiteTime = gameConfig.timeControl;
     blackTime = gameConfig.timeControl;
 
@@ -271,7 +287,6 @@ var startInterval = setInterval(function() {
     updatePlayerDisplay();
     startTimer();
 
-    // If AI is White it moves first
     if (gameConfig.aiColor === 'white') {
       makeAIMove();
     }

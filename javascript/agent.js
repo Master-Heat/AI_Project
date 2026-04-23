@@ -309,8 +309,8 @@ function minimax(depth, alpha, beta, isMaximizing) {
 
 function findBestMove() {
   // 1. Opening book
-  var bookMove = getOpeningMove();
-  if (bookMove) return bookMove;
+  // var bookMove = getOpeningMove();
+  // if (bookMove) return bookMove; *handled in script.js now
 
   // 2. Minimax
   var moves     = getOrderedMoves();
