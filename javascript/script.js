@@ -209,7 +209,7 @@ function makeAIMove() {
     var bestMove = findBestMove(); // Defined in agent.js
 
     var endTime = Date.now(); // calculate the time while finding the best move 
-    var timeSpent = Math.floor((endTime - startTime) / 1000);
+    var timeSpent = Math.ceil((endTime - startTime) / 1000);
     if (gameConfig.aiColor === "white"){
       whiteTime -= timeSpent
     }else{
