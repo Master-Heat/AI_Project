@@ -203,7 +203,18 @@ function makeAIMove() {
 
   // Small delay so the browser renders the human's move first
   setTimeout(function() {
+    var startTime = Date.now(); // Record start time
+    
+
     var bestMove = findBestMove(); // Defined in agent.js
+
+    var endTime = Date.now(); // calculate the time while finding the best move 
+    var timeSpent = Math.floor((endTime - startTime) / 1000);
+    if (gameConfig.aiColor === "white"){
+      whiteTime -= timeSpent
+    }else{
+      blackTime -=timeSpent
+    }
 
     if (bestMove) {
       game.move(bestMove);
