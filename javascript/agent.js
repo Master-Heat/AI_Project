@@ -243,14 +243,10 @@ function scoreMoveForOrdering(move) {
 
 function getOrderedMoves() {
   var moves = game.moves({ verbose: true });
-
-  // Sort by score descending (best moves first)
   moves.sort(function(a, b) {
     return scoreMoveForOrdering(b) - scoreMoveForOrdering(a);
   });
-
-  // Return SAN strings for game.move() compatibility
-  return moves.map(function(m) { return m.san; });
+  return moves; // return move objects directly, not SAN strings
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -276,12 +272,16 @@ function minimax(depth, alpha, beta, isMaximizing) {
   if (game.in_draw() || game.in_stalemate()) return 0;
   if (depth === 0) return evaluateBoard();
 
-  var moves = getOrderedMoves();
+  // Generate and sort moves directly here — no function call overhead
+  var moves = game.moves({ verbose: true });
+  moves.sort(function(a, b) {
+    return scoreMoveForOrdering(b) - scoreMoveForOrdering(a);
+  });
 
   if (isMaximizing) {
     var maxScore = -Infinity;
     for (var i = 0; i < moves.length; i++) {
-      game.move(moves[i]);
+      game.move(moves[i]); // pass object directly — no SAN parsing
       var score = minimax(depth - 1, alpha, beta, false);
       game.undo();
       if (score > maxScore) maxScore = score;
@@ -322,13 +322,13 @@ function findBestMove() {
   console.log('AI: Depth ' + depth + ' | Moves: ' + moves.length);
 
   for (var i = 0; i < moves.length; i++) {
-    game.move(moves[i]);
+    game.move(moves[i]); // pass object directly
 
     // Instant checkmate — no need to search further
     if (game.in_checkmate()) {
       game.undo();
-      console.log('AI: Checkmate in 1 → ' + moves[i]);
-      return moves[i];
+      console.log('AI: Checkmate in 1 → ' + moves[i].san);
+      return moves[i].san; // return SAN string for the rest of your code
     }
 
     var score = minimax(depth - 1, -Infinity, Infinity, !isAIWhite);
@@ -352,6 +352,6 @@ function findBestMove() {
   }
 
   var chosen = bestMoves[Math.floor(Math.random() * bestMoves.length)];
-  console.log('AI: Chose → ' + chosen + ' (score: ' + bestScore + ')');
-  return chosen;
+  console.log('AI: Chose → ' + chosen.san + ' (score: ' + bestScore + ')');
+  return chosen.san; // return SAN string for the rest of your code
 }
