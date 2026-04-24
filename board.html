@@ -4,10 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chess Board</title>
-
   <!-- Chessboard.js CSS -->
   <link rel="stylesheet" href="css/chessboard-1.0.0.min.css">
-
   <!-- Your CSS -->
   <link rel="stylesheet" href="style.css">
 </head>
@@ -55,13 +53,16 @@
   <!-- ── 3. Chess.js (move validation and game state) ─────── -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 
-  <!-- ── 4. Game Logic (defines `game` and `gameConfig`) ──── -->
+  <!-- ── 4. hegazi's handcrafted pieces ─────── -->
+  <script src="javascript/pieces.js"></script>
+
+  <!-- ── 5. Game Logic (defines `game` and `gameConfig`) ──── -->
   <script src="javascript/script.js"></script>
 
-  <!-- ── 5. Opening Book (needs `game` and `gameConfig`) ──── -->
+  <!-- ── 6. Opening Book (needs `game` and `gameConfig`) ──── -->
   <script src="javascript/openingBook.js"></script>
 
-  <!-- ── 6. AI Agent (needs everything above) ─────────────── -->
+  <!-- ── 7. AI Agent (needs everything above) ─────────────── -->
   <script src="javascript/agent.js"></script>
 
 </body>

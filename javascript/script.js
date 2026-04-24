@@ -35,20 +35,12 @@ if (savedConfig) {
 //  WEB WORKER SETUP
 // ═══════════════════════════════════════════════════════════════
 
-var aiWorker        = new Worker('javascript/worker.js');
-var aiMoveStartTime = 0;
+var aiWorker = new Worker('javascript/worker.js');
 
 aiWorker.onmessage = function(e) {
   var bestMove = e.data;
 
-  var endTime   = Date.now();
-  var timeSpent = Math.ceil((endTime - aiMoveStartTime) / 1000);
-
-  if (gameConfig.aiColor === 'white') {
-    whiteTime -= timeSpent;
-  } else {
-    blackTime -= timeSpent;
-  }
+  // ← REMOVED: Time calculation logic (timer runs smoothly now)
 
   if (bestMove) {
     game.move(bestMove);
@@ -58,7 +50,7 @@ aiWorker.onmessage = function(e) {
     updateTimerDisplay();
 
     if (!game.game_over()) {
-      startTimer();
+      startTimer(); // ← Timer continues for human's turn
     }
   }
 };
@@ -93,6 +85,7 @@ function startTimer() {
         whiteTime = 0;
         stopTimer();
         endGameByTimeout('Black');
+        return; // ← Added to prevent negative time
       }
     } else {
       blackTime--;
@@ -100,6 +93,7 @@ function startTimer() {
         blackTime = 0;
         stopTimer();
         endGameByTimeout('White');
+        return; // ← Added to prevent negative time
       }
     }
     updateTimerDisplay();
@@ -184,39 +178,100 @@ function updateStatus() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  BOARD EVENT HANDLERS
+//  CLICK-TO-MOVE
 // ═══════════════════════════════════════════════════════════════
 
-function onDragStart(source, piece) {
-  if (game.game_over()) return false;
-  if (game.turn() === gameConfig.aiColor[0]) return false;
-  if (game.turn() === 'w' && piece.search(/^b/) !== -1) return false;
-  if (game.turn() === 'b' && piece.search(/^w/) !== -1) return false;
-}
+var selectedSquare   = null;
+var legalMoveSquares = [];
 
-function onDrop(source, target) {
-  if (game.turn() === gameConfig.aiColor[0]) return 'snapback';
+function clearHighlights() {
+  if (selectedSquare) {
+    $('[data-square="' + selectedSquare + '"]')
+      .removeClass('highlight-selected');
+  }
 
-  var move = game.move({
-    from:      source,
-    to:        target,
-    promotion: 'q'
+  legalMoveSquares.forEach(function(sq) {
+    $('[data-square="' + sq + '"]')
+      .removeClass('highlight-legal-move')
+      .removeClass('highlight-capture-move');
   });
 
-  if (move === null) return 'snapback';
-
-  updateStatus();
-  updatePlayerDisplay();
-  updateTimerDisplay();
-
-  if (!game.game_over()) {
-    startTimer();
-    makeAIMove();
-  }
+  selectedSquare   = null;
+  legalMoveSquares = [];
 }
 
-function onSnapEnd() {
-  board.position(game.fen());
+function highlightLegalMoves(square) {
+  var moves = game.moves({ square: square, verbose: true });
+  if (moves.length === 0) return false;
+
+  $('[data-square="' + square + '"]').addClass('highlight-selected');
+  selectedSquare = square;
+
+  moves.forEach(function(move) {
+    var sq  = move.to;
+    var $sq = $('[data-square="' + sq + '"]');
+
+    if (game.get(sq)) {
+      $sq.addClass('highlight-capture-move');
+    } else {
+      $sq.addClass('highlight-legal-move');
+    }
+
+    legalMoveSquares.push(sq);
+  });
+
+  return true;
+}
+
+function onSquareClick(square) {
+  if (game.game_over())                      return;
+  if (game.turn() === gameConfig.aiColor[0]) return;
+
+  var piece = game.get(square);
+
+  // Nothing selected yet
+  if (!selectedSquare) {
+    if (!piece)                      return;
+    if (piece.color !== game.turn()) return;
+    highlightLegalMoves(square);
+    return;
+  }
+
+  // Clicked same square → deselect
+  if (square === selectedSquare) {
+    clearHighlights();
+    return;
+  }
+
+  // Clicked another friendly piece → switch selection
+  if (piece && piece.color === game.turn()) {
+    clearHighlights();
+    highlightLegalMoves(square);
+    return;
+  }
+
+  // Clicked a legal destination → make the move
+  if (legalMoveSquares.indexOf(square) !== -1) {
+    var from = selectedSquare;
+    clearHighlights();
+
+    var move = game.move({ from: from, to: square, promotion: 'q' });
+    if (move === null) return;
+
+    board.position(game.fen());
+    updateStatus();
+    updatePlayerDisplay();
+    updateTimerDisplay();
+
+    if (!game.game_over()) {
+      startTimer();
+      makeAIMove();
+    }
+    return;
+  }
+
+  // Clicked somewhere else → deselect
+  clearHighlights();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -224,12 +279,11 @@ function onSnapEnd() {
 // ═══════════════════════════════════════════════════════════════
 
 function makeAIMove() {
-  if (game.game_over()) return;
+  if (game.game_over())                      return;
   if (game.turn() !== gameConfig.aiColor[0]) return;
 
   setTimeout(function() {
-
-    // 1. Try opening book first — fast, stays on main thread
+    // Try opening book first
     var bookMove = getOpeningMove();
     if (bookMove) {
       game.move(bookMove);
@@ -241,15 +295,13 @@ function makeAIMove() {
       return;
     }
 
-    // 2. No book move — send to worker for minimax
-    stopTimer();
-    aiMoveStartTime = Date.now();
-
+    // No book move — use minimax via worker
+    // ← REMOVED: stopTimer() — let it keep running!
+    
     aiWorker.postMessage({
       fen:        game.fen(),
       gameConfig: gameConfig
     });
-
   }, 300);
 }
 
@@ -258,17 +310,37 @@ function makeAIMove() {
 // ═══════════════════════════════════════════════════════════════
 
 var config = {
-  draggable:   true,
+  draggable:   false,
   position:    'start',
   orientation: gameConfig.humanColor,
-  onDragStart: onDragStart,
-  onDrop:      onDrop,
-  onSnapEnd:   onSnapEnd
+  pieceTheme: function(piece) {
+    // Convert SVG string to data URI
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(chessPiecesSVG[piece]);
+  }
 };
 
 setupGameUI();
 board = Chessboard('chessboard', config);
 updateStatus();
+
+// ═══════════════════════════════════════════════════════════════
+//  CLICK LISTENER
+// ═══════════════════════════════════════════════════════════════
+
+$('#chessboard').on('click', '.square-55d63', function() {
+  var square = $(this).attr('data-square');
+
+  // Fallback: parse from class name if data-square is missing
+  if (!square || square === '55d63') {
+    var classList = $(this).attr('class');
+    var match     = classList.match(/square-([a-h][1-8])/);
+    if (match) {
+      square = match[1];
+    }
+  }
+
+  onSquareClick(square);
+});
 
 // ═══════════════════════════════════════════════════════════════
 //  WAIT FOR OPENING BOOK TO LOAD BEFORE STARTING

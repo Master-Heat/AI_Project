@@ -2,27 +2,32 @@
 @font-face {
   font-family: "iAWriter";
   src: url("assets/iAWriterDuoV.ttf") format("truetype-variations");
-  font-weight: 100 900; /* Variable font supports weight range */
+  font-weight: 100 900;
+  /* Variable font supports weight range */
 }
+
 /* General */
 :root {
   font-size: 16px;
   --light-square: #ffffff;
-  --board-size: 350px;
+  --board-size: 500px;
   --square-size: calc(var(--board-size) / 8);
 }
+
 * {
   margin: 0;
   font-family: "iAWriter";
 }
+
 body {
   height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
   background-color: #fafafa;
-  padding: 0px 200px;
+  /* padding: 150px; */
 }
+
 .button {
   display: block;
   width: 350px;
@@ -32,29 +37,42 @@ body {
   border: 2px solid rgb(189, 189, 189);
   border-radius: 4px;
   cursor: pointer;
-  text-align: center;
+  /* text-align: center; */
 }
+
 .button:hover {
   background-color: black;
   color: white;
   border-color: black;
 }
+
 .button.btn-selected {
+
+  background-color: black !important;
+  color: white !important;
+  border-color: black !important;
   /* Add custom styling for selected buttons */
 }
+
 .button.btn-unselected {
+
   /* Add custom styling for unselected buttons */
 }
 
 /* Game Homepage */
 .homepage {
   display: flex;
-  height: 100%;
-  width: 100%;
+  height: var(--board-size);
+  width: auto;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 15px;
 }
+
 .logo {
   height: 150px;
 }
+
 .homepage.buttons {
   flex: 1;
   height: 100%;
@@ -64,29 +82,35 @@ body {
   align-items: center;
   gap: 20px;
 }
+
 .homepage.hero {
   flex: 2.5;
   height: 100%;
 }
-.play-button.expanded{
-    background-color: white;
+
+.play-button.expanded {
+  background-color: white;
 }
+
 .play-button.expanded:hover {
   background-color: white;
   color: black;
   border-color: rgb(189, 189, 189);
   cursor: default;
 }
-.play-button.expanded .button{
-    background-color: black;
-    border: 2px solid black;
-    color: white;
+
+.play-button.expanded .button {
+  background-color: white;
+  border: 2px solid rgb(189, 189, 189);
+  color: black;
 }
+
 .play-config {
   display: none;
   position: relative;
 }
-.close-button{
+
+.close-button {
   position: absolute !important;
   top: 0px;
   right: 0px;
@@ -99,48 +123,65 @@ body {
   align-items: center !important;
   justify-content: center !important;
 }
+
 .play-button.expanded .play-button-text {
-  display: none;
+  display: none
 }
+
 .play-button.expanded .play-config {
-    display: flex;
-    flex-direction: column;
-    justify-content: start;
-    align-items: start;
-    gap: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+  align-items: start;
+  gap: 10px;
 }
+
 .play-config-title {
   font-weight: bold;
 }
-.play-config-items{
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: flex-start;
-    gap: 5px;
+
+.play-config-items {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 5px;
 }
-.config-item{
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: flex-start;
-    gap: 2px;
+
+.config-item {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 2px;
 }
-.config-input{
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 3px;
+
+.config-input {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 3px;
 }
-.config-item.small .config-input .config-button{
-    width: 50%;
+
+.config-item.small .config-input .config-button {
+  width: 50%;
 }
-.config-item .config-input .config-button{
-    width: 33.33%;
+
+.config-item .config-input .config-button {
+  width: 33.33%;
 }
+
+.config-button:hover,
+.play-start-button:hover {
+  background-color: black !important;
+  color: white !important;
+  border: solid black 2px !important;
+  padding: 6px;
+}
+
 /* Game Board */
 .game-container {
   display: flex;
@@ -148,9 +189,11 @@ body {
   align-items: center;
   gap: 20px;
 }
+
 #chessboard {
   width: 400px;
 }
+
 .player-info {
   width: 400px;
   padding: 15px;
@@ -165,21 +208,26 @@ body {
   border: 3px solid #555;
   transition: border-color 0.3s;
 }
+
 .player-info.active {
   border-color: #ffd700;
   box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
 }
+
 .player-name {
   flex: 1;
 }
+
 .player-details {
   display: flex;
   gap: 20px;
   align-items: center;
 }
+
 .player-color {
   font-size: 24px;
 }
+
 .player-time {
   min-width: 60px;
   text-align: right;
@@ -187,6 +235,7 @@ body {
   font-size: 20px;
   color: #ffd700;
 }
+
 .result {
   position: fixed;
   top: 50%;
@@ -204,17 +253,17 @@ body {
   min-width: 300px;
   white-space: pre-wrap;
 }
+
 .result.show {
   display: block;
 }
-.result.show {
-  display: block;
-}
+
 /* HERO SECTION */
 .hero {
   justify-content: center;
   align-items: center;
 }
+
 #hero-board {
   display: grid;
   grid-template-columns: repeat(8, var(--square-size));
@@ -222,18 +271,22 @@ body {
   width: var(--board-size);
   height: var(--board-size);
 }
+
 .square {
   width: var(--square-size);
   height: var(--square-size);
 }
+
 .square.white {
   background-color: var(--light-square);
 }
+
 .square.dark {
   background-image: url('assets/dark-square-black.jpg');
   background-size: cover;
   background-position: center;
 }
+
 .piece {
   width: 100%;
   height: 100%;
@@ -242,12 +295,130 @@ body {
   -webkit-user-drag: none;
   animation: wave-float 2s ease-in-out infinite;
 }
+
 @keyframes wave-float {
+
   0%,
   100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-8px);
   }
+}
+
+/* Player Card UI */
+.player-card-ui {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 90px;
+  padding: 3px;
+  border: 1px solid #bdbdbd;
+  border-radius: 4px;
+  gap: 2px;
+  box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.05);
+  background-color: #fafafa;
+  font-size: 8px;
+}
+
+.card-avatar {
+  width: 100%;
+  height: 100%;
+  background-color: #ddd;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 2px;
+}
+
+.avatar-circle {
+  width: 50%;
+  height: 50%;
+  background-color: #888;
+  border-radius: 50%;
+}
+
+.card-name-row {
+  font-size: 10px;
+  font-weight: bold;
+  text-align: center;
+  line-height: 1;
+}
+
+.card-time-row {
+  font-size: 8px;
+  color: #555;
+  text-align: center;
+  line-height: 1;
+}
+
+/* Game Started Styles */
+.homepage.buttons.game-started-buttons {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.homepage.hero.game-started-hero {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 24px;
+}
+
+#hero-board.game-started-board {
+  margin: 0 auto;
+}
+
+#hero-board.game-started-board .piece {
+  animation: none;
+}
+
+/* ── Legal Move Highlights ──────────────────────────────── */
+
+/* Dot on empty squares the piece can move to */
+#chessboard .square-55d63.highlight-legal-move::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 30%;
+  height: 30%;
+  background-color: rgba(0, 0, 0, 0.25);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Ring on enemy squares the piece can capture */
+#chessboard .square-55d63.highlight-capture-move::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  box-shadow: inset 0 0 0 6px rgba(0, 0, 0, 0.25);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Yellow tint on the selected piece's square */
+#chessboard .square-55d63.highlight-selected {
+  background-color: rgba(255, 255, 0, 0.5) !important;
+}
+
+/* ── SVG Piece Styling ────────────────────────────────────── */
+#chessboard img.piece-417db {
+  width: 100%;
+  height: 100%;
 }
