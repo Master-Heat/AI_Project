@@ -409,7 +409,7 @@ function minimax(depth, alpha, beta, isMaximizing) {
 
 function findBestMove() {
   // 1. Opening book
-  var bookMove = getOpeningMove();
+  var bookMove =pickRandomMove((getAllPossibleMoves(getNextFens(game.fen()), ecoData)));
   if (bookMove) return bookMove;
 
   // 2. Setup
