@@ -322,15 +322,16 @@ body {
   height: var(--square-size);
 }
 
-.square.white {
-  background-color: var(--light-square);
-}
+  .square.white , .white-1e1d7  {
+    background-color: var(--light-square) ;
+  }
 
-.square.dark {
-  background-image: url('assets/dark-square-black.jpg');
-  background-size: cover;
-  background-position: center;
-}
+  .square.dark , .black-3c85d  {
+    background-image: url('assets/dark-square-black.jpg') ;
+    background-size: cover ;
+    background-position: center ;
+  }
+
 
 .piece {
   width: 100%;
