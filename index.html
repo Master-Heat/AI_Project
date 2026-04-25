@@ -12,282 +12,117 @@
 </head>
 
 <body>
-  <div class="homepage">
-    <div class="homepage buttons">
-      <!-- <img class="logo" src="assets/logo.png" /> -->
-      <div class="button play-button expanded">
-        <div class="play-button-text " onclick="openPlayConfig()">Play a Game</div>
-        <div class="play-config" id="playConfig">
-          <!-- <button class="close-button button" onclick="closePlayConfig()">✕</button> -->
-          <div class="play-config-title">Game Configuration:</div>
-          <div class="play-config-items">
-            <!-- Number of Players -->
-            <div class="config-item small">
-              <label class="config-title">Players:</label>
-              <div class="config-input">
-                <button class="button config-button player-count" data-value="1">1 Player</button>
-                <button class="button config-button player-count" data-value="2">2 Players</button>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SETUP PAGE (Initial View)
+       ═══════════════════════════════════════════════════════════════ -->
+  <div id="setupPage" class="page-view active">
+    <div class="homepage">
+      <div class="homepage buttons">
+        <div class="button play-button expanded">
+          <div class="play-button-text" onclick="openPlayConfig()">Play a Game</div>
+          <div class="play-config" id="playConfig">
+            <div class="play-config-title">Game Configuration:</div>
+            <div class="play-config-items">
+              <!-- Number of Players -->
+              <div class="config-item small">
+                <label class="config-title">Players:</label>
+                <div class="config-input">
+                  <button class="button config-button player-count" data-value="1">1 Player</button>
+                  <button class="button config-button player-count" data-value="2">2 Players</button>
+                </div>
+              </div>
+              <!-- Player Color(s) -->
+              <div class="config-item">
+                <label class="config-title" id="player1ColorLabel">Player Color:</label>
+                <div class="config-input color-options">
+                  <button class="button config-button color-button" data-value="black">Black</button>
+                  <button class="button config-button color-button" data-value="white">White</button>
+                  <button class="button config-button color-button" data-value="random">Random</button>
+                </div>
+              </div>
+              <!-- Player 2 Color (only visible in 2player mode) -->
+              <div class="config-item" id="player2ColorItem" style="display: none;">
+                <label class="config-title">Player #2 Color:</label>
+                <div class="config-input color-options">
+                  <button class="button config-button color-button" data-value="black">Black</button>
+                  <button class="button config-button color-button" data-value="white">White</button>
+                  <button class="button config-button color-button" data-value="random">Random</button>
+                </div>
+              </div>
+              <!-- Time Control -->
+              <div class="config-item">
+                <label class="config-title">Time Control</label>
+                <div class="config-input">
+                  <button class="button config-button time-button" data-value="1">1 Minute</button>
+                  <button class="button config-button time-button" data-value="3">3 Minutes</button>
+                  <button class="button config-button time-button" data-value="10">10 Minutes</button>
+                </div>
               </div>
             </div>
-            <!-- Player Color(s) -->
-            <div class="config-item">
-              <label class="config-title" id="player1ColorLabel">Player Color:</label>
-              <div class="config-input color-options">
-                <button class="button config-button color-button" data-value="black">Black</button>
-                <button class="button config-button color-button" data-value="white">White</button>
-                <button class="button config-button color-button" data-value="random">Random</button>
-              </div>
-            </div>
-            <!-- Player 2 Color (only visible in 2player mode) -->
-            <div class="config-item " id="player2ColorItem" style="display: none;">
-              <label class="config-title">Player #2 Color:</label>
-              <div class="config-input color-options">
-                <button class="button config-button color-button" data-value="black">Black</button>
-                <button class="button config-button color-button" data-value="white">White</button>
-                <button class="button config-button color-button" data-value="random">Random</button>
-              </div>
-            </div>
-            <!-- Time Control -->
-            <div class="config-item">
-              <label class="config-title">Time Control</label>
-              <div class="config-input">
-                <button class="button config-button  time-button" data-value="1">1 Minute</button>
-                <button class="button config-button  time-button" data-value="3">3 Minutes</button>
-                <button class="button config-button  time-button" data-value="10">10 Minutes</button>
-              </div>
-            </div>
+            <button class="button play-start-button">Start Game</button>
           </div>
-          <button class="button play-start-button">Start Game</button>
         </div>
       </div>
-
-    </div>
-    <div class="homepage hero">
-      <div id="hero-board"></div>
+      <div class="homepage hero">
+        <div id="hero-board"></div>
+      </div>
     </div>
   </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       GAME PAGE (Hidden Initially)
+       ═══════════════════════════════════════════════════════════════ -->
+  <div id="gamePage" class="page-view">
+    <div class="homepage game-active">
+      <div class="homepage buttons game-started-buttons" id="gamePlayerCards">
+        <!-- Player cards will be inserted here dynamically -->
+      </div>
+      <div class="homepage hero game-started-hero">
+        <div id="chessboard"></div>
+      </div>
+    </div>
+
+    <!-- Game Result Overlay -->
+    <div class="result">
+      <div id="resultText">Game Over</div>
+      <button id="backToSetupBtn" class="result-button">
+        Back to Setup
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SCRIPTS
+       ═══════════════════════════════════════════════════════════════ -->
+
+  <!-- Hero board animation -->
   <script src="javascript/hero.js"></script>
-  <script>
-    let playerCount = 1;
-    let playerColor = 'black';
-    let player2Color = 'white';
-    let timeControl = '3';
 
-    function openPlayConfig() {
-      const playButton = document.querySelector('.play-button');
-      playButton.classList.add('expanded');
-    }
+  <!-- Setup page logic -->
+  <script src="javascript/setup.js"></script>
 
-    function closePlayConfig() {
-      const playButton = document.querySelector('.play-button');
-      playButton.classList.remove('expanded');
-    }
-
-    function setPlayerCount(count) {
-      playerCount = count;
-      document.querySelectorAll('.player-count').forEach(btn => {
-        btn.classList.toggle('btn-selected', parseInt(btn.dataset.value) === count);
-      });
-
-      const player2Item = document.getElementById('player2ColorItem');
-      player2Item.style.display = (count === 1) ? 'none' : 'block';
-      document.getElementById('player1ColorLabel').textContent = (count === 1) ? 'Player Color:' : 'Player #1 Color:';
-    }
-
-    function setPlayerColor(color) {
-      playerColor = color;
-      // Prevent both players from having the same color
-      if (playerCount === 2 && color !== 'random' && color === player2Color) {
-        setPlayer2Color(color === 'black' ? 'white' : 'black');
-      }
-      updateColorUI();
-    }
-
-    function setPlayer2Color(color) {
-      player2Color = color;
-      // Prevent both players from having the same color
-      if (color !== 'random' && color === playerColor) {
-        setPlayerColor(color === 'black' ? 'white' : 'black');
-      }
-      updateColorUI();
-    }
-
-    function updateColorUI() {
-      // Update Player 1 Buttons
-      document.querySelectorAll('.config-item:not(#player2ColorItem) .color-button').forEach(btn => {
-        btn.classList.toggle('btn-selected', btn.dataset.value === playerColor);
-      });
-      // Update Player 2 Buttons
-      document.querySelectorAll('#player2ColorItem .color-button').forEach(btn => {
-        btn.classList.toggle('btn-selected', btn.dataset.value === player2Color);
-      });
-    }
-
-    function setTimeControl(time) {
-      timeControl = time;
-
-      // Update button states
-      document.querySelectorAll('.time-button').forEach(btn => {
-        btn.classList.remove('btn-selected', 'btn-unselected');
-        btn.classList.add(btn.dataset.value === time ? 'btn-selected' : 'btn-unselected');
-      });
-    }
-    /*
-    
-    function startGame() {
-      // Create game configuration object
-      let gameConfig = {
-        playerCount: playerCount,
-        timeControl: parseInt(timeControl) * 60 // Convert minutes to seconds
-      };
-
-      if (playerCount === 1) {
-        // 1-player mode (vs AI)
-        gameConfig.playerColor = playerColor;
-        // Determine AI and human colors
-        if (playerColor === 'random') {
-          gameConfig.humanColor = Math.random() < 0.5 ? 'black' : 'white';
-          gameConfig.aiColor = gameConfig.humanColor === 'black' ? 'white' : 'black';
-        } else {
-          gameConfig.humanColor = playerColor;
-          gameConfig.aiColor = playerColor === 'black' ? 'white' : 'black';
-        }
-      } else {
-        // 2-player mode
-        // Player 1 selects a color, Player 2 gets the opposite
-        let player1Color = playerColor;
-        if (player1Color === 'random') {
-          player1Color = Math.random() < 0.5 ? 'black' : 'white';
-        }
-        let player2ColorComputed = player1Color === 'black' ? 'white' : 'black';
-
-        gameConfig.player1Color = player1Color;
-        gameConfig.player2Color = player2ColorComputed;
-      }
-
-      // Save to localStorage
-      localStorage.setItem('chessGameConfig', JSON.stringify(gameConfig));
-
-      // Redirect to board
-      window.location.href = 'board.html';
-    }
-*/
-
-    function startGame() {
-      let gameConfig = {
-        playerCount: playerCount,
-        timeControl: parseInt(timeControl) * 60,
-        boardThemeColor: "#fafafa"
-      };
-
-      if (playerCount === 1) {
-        gameConfig.humanColor = playerColor === 'random' ? (Math.random() < 0.5 ? 'black' : 'white') : playerColor;
-        gameConfig.aiColor = gameConfig.humanColor === 'black' ? 'white' : 'black';
-      } else {
-        let p1Color = playerColor === 'random' ? (Math.random() < 0.5 ? 'black' : 'white') : playerColor;
-        gameConfig.player1Color = p1Color;
-        gameConfig.player2Color = p1Color === 'black' ? 'white' : 'black';
-      }
-
-      const buttonsPanel = document.querySelector('.homepage.buttons');
-      const hero = document.querySelector('.homepage.hero');
-      const heroBoard = document.getElementById('hero-board');
-
-      if (buttonsPanel) {
-        buttonsPanel.innerHTML = '';
-        buttonsPanel.classList.add('game-started-buttons');
-      }
-
-      if (hero) {
-        hero.classList.add('game-started-hero');
-      }
-
-      if (heroBoard) {
-        heroBoard.classList.add('game-started-board');
-      }
-
-      const createPlayerCard = (name, time, color) => {
-        const card = document.createElement('div');
-        card.className = 'player-card-ui';
-        card.innerHTML = `
-          <div class="card-avatar">
-            <div class="avatar-circle"></div>
-          </div>
-          <div class="card-info">
-            <div class="card-name-row">${name}</div>
-            <div class="card-time-row">${Math.floor(time / 60)}:00</div>
-          </div>`;
-        return card;
-      };
-
-      const topCard = playerCount === 1
-        ? createPlayerCard('AI Opponent', gameConfig.timeControl, gameConfig.aiColor)
-        : createPlayerCard('Player 2', gameConfig.timeControl, gameConfig.player2Color);
-
-      const bottomCard = playerCount === 1
-        ? createPlayerCard('You', gameConfig.timeControl, gameConfig.humanColor)
-        : createPlayerCard('Player 1', gameConfig.timeControl, gameConfig.player1Color);
-
-      if (buttonsPanel) {
-        buttonsPanel.appendChild(topCard);
-        buttonsPanel.appendChild(bottomCard);
-      }
-
-      localStorage.setItem('chessGameConfig', JSON.stringify(gameConfig));
-    }
-
-
-    // Initialize with default values
-    window.addEventListener('DOMContentLoaded', () => {
-      // Initialize player count
-      document.querySelectorAll('.player-count').forEach(btn => {
-        btn.classList.add(parseInt(btn.dataset.value) === playerCount ? 'btn-selected' : 'btn-unselected');
-        btn.addEventListener('click', (e) => setPlayerCount(parseInt(e.target.dataset.value)));
-      });
-
-      // Initialize player 1 color
-      document.querySelectorAll('.config-item:not(#player2ColorItem) .color-button').forEach(btn => {
-        btn.classList.add(btn.dataset.value === playerColor ? 'btn-selected' : 'btn-unselected');
-        btn.addEventListener('click', (e) => setPlayerColor(e.target.dataset.value));
-      });
-
-      // Initialize player 2 color
-      document.querySelectorAll('#player2ColorItem .color-button').forEach(btn => {
-        btn.classList.add(btn.dataset.value === player2Color ? 'btn-selected' : 'btn-unselected');
-        btn.addEventListener('click', (e) => setPlayer2Color(e.target.dataset.value));
-      });
-
-      // Initialize time control
-      document.querySelectorAll('.time-button').forEach(btn => {
-        btn.classList.add(btn.dataset.value === timeControl ? 'btn-selected' : 'btn-unselected');
-        btn.addEventListener('click', (e) => setTimeControl(e.target.dataset.value));
-      });
-
-      // Initialize Start Game button
-      document.querySelector('.play-start-button').addEventListener('click', startGame);
-    });
-  </script>
-
-  <!-- ── 1. jQuery (required by chessboard.js) ───────────── -->
+  <!-- jQuery (required by chessboard.js) -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-  <!-- ── 2. Chessboard.js ────────────────────────────────── -->
+  <!-- Chessboard.js -->
   <script src="js/chessboard-1.0.0.min.js"></script>
 
-  <!-- ── 3. Chess.js (move validation and game state) ─────── -->
+  <!-- Chess.js (move validation and game state) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 
-  <!-- ── 4. hegazi's handcrafted pieces ─────── -->
+  <!-- Hegazi's handcrafted pieces -->
   <script src="javascript/pieces.js"></script>
 
-  <!-- ── 5. Game Logic (defines `game` and `gameConfig`) ──── -->
+  <!-- Game Logic -->
   <script src="javascript/script.js"></script>
 
-  <!-- ── 6. Opening Book (needs `game` and `gameConfig`) ──── -->
+  <!-- Opening Book -->
   <script src="javascript/openingBook.js"></script>
 
-  <!-- ── 7. AI Agent (needs everything above) ─────────────── -->
+  <!-- AI Agent -->
   <script src="javascript/agent.js"></script>
+
 </body>
 
 </html>
