@@ -2,7 +2,6 @@
  * script.js
  * ──────────────────────────────────────────────────────────────
  * Main game logic. Connects chess.js + chessboard.js + AI.
- * ONLY executes when initializeGame() is called
  * ──────────────────────────────────────────────────────────────
  */
 
@@ -10,7 +9,7 @@
   'use strict';
 
   // ═══════════════════════════════════════════════════════════════
-  //  GLOBAL VARIABLES (inside closure)
+  //  GLOBAL VARIABLES
   // ═══════════════════════════════════════════════════════════════
 
   var board = null;
@@ -22,6 +21,15 @@
   var selectedSquare = null;
   var legalMoveSquares = [];
   var aiWorker = null;
+
+  // Expose game instance for openingBook.js and agent.js
+  window.getGameInstance = function() {
+    return game;
+  };
+
+  window.getGameConfig = function() {
+    return gameConfig;
+  };
 
   // ═══════════════════════════════════════════════════════════════
   //  GAME INITIALIZATION
@@ -45,8 +53,8 @@
     // Initialize Chess.js
     game = new Chess();
 
-    // Initialize worker
-    if (!aiWorker) {
+    // Initialize worker (only for 1-player mode)
+    if (gameConfig.playerCount === 1 && !aiWorker) {
       aiWorker = new Worker('javascript/worker.js');
       aiWorker.onmessage = function(e) {
         var bestMove = e.data;
@@ -121,6 +129,7 @@
           resetOpening();
         }
 
+        // Only start timer and AI in 1-player mode
         if (gameConfig.playerCount === 1) {
           updateTimerDisplay();
           updatePlayerDisplay();
@@ -129,20 +138,22 @@
           if (gameConfig.aiColor === 'white') {
             makeAIMove();
           }
+        } else {
+          // 2-player mode: just update display and start timer
+          updateTimerDisplay();
+          updatePlayerDisplay();
+          startTimer();
         }
       } else if (attempts > 100) {
-        // Timeout after 10 seconds
         clearInterval(startInterval);
         console.warn('Opening book failed to load, starting anyway');
         
-        if (gameConfig.playerCount === 1) {
-          updateTimerDisplay();
-          updatePlayerDisplay();
-          startTimer();
+        updateTimerDisplay();
+        updatePlayerDisplay();
+        startTimer();
 
-          if (gameConfig.aiColor === 'white') {
-            makeAIMove();
-          }
+        if (gameConfig.playerCount === 1 && gameConfig.aiColor === 'white') {
+          makeAIMove();
         }
       }
     }, 100);
@@ -161,13 +172,22 @@
   function updateTimerDisplay() {
     if (!gameConfig) return;
 
-    var aiTime = gameConfig.aiColor === 'white' ? whiteTime : blackTime;
-    var humanTime = gameConfig.aiColor === 'white' ? blackTime : whiteTime;
+    var topTime, bottomTime;
+
+    if (gameConfig.playerCount === 1) {
+      // 1-player mode
+      topTime = gameConfig.aiColor === 'white' ? whiteTime : blackTime;
+      bottomTime = gameConfig.humanColor === 'white' ? whiteTime : blackTime;
+    } else {
+      // 2-player mode
+      topTime = gameConfig.player2Color === 'white' ? whiteTime : blackTime;
+      bottomTime = gameConfig.player1Color === 'white' ? whiteTime : blackTime;
+    }
 
     var cards = document.querySelectorAll('.player-card-ui .card-time-row');
     if (cards.length >= 2) {
-      cards[0].textContent = formatTime(aiTime);
-      cards[1].textContent = formatTime(humanTime);
+      cards[0].textContent = formatTime(topTime);
+      cards[1].textContent = formatTime(bottomTime);
     }
   }
 
@@ -208,11 +228,18 @@
     stopTimer();
     var resultDiv = document.querySelector('.result');
     var resultText = document.getElementById('resultText');
-    var winnerLabel =
-      (winner === 'White' && gameConfig.humanColor === 'white') ||
-      (winner === 'Black' && gameConfig.humanColor === 'black')
-        ? 'You win! 🎉'
-        : 'AI wins!';
+    
+    var winnerLabel;
+    if (gameConfig.playerCount === 1) {
+      winnerLabel =
+        (winner === 'White' && gameConfig.humanColor === 'white') ||
+        (winner === 'Black' && gameConfig.humanColor === 'black')
+          ? 'You win! 🎉'
+          : 'AI wins!';
+    } else {
+      winnerLabel = winner + ' wins! 🎉';
+    }
+    
     resultText.textContent = "Time's up!\n" + winnerLabel;
     resultDiv.classList.add('show');
   }
@@ -228,7 +255,17 @@
         card.classList.remove('active');
       });
 
-      if (game.turn() === gameConfig.aiColor[0]) {
+      var topCardColor, bottomCardColor;
+      
+      if (gameConfig.playerCount === 1) {
+        topCardColor = gameConfig.aiColor;
+        bottomCardColor = gameConfig.humanColor;
+      } else {
+        topCardColor = gameConfig.player2Color;
+        bottomCardColor = gameConfig.player1Color;
+      }
+
+      if (game.turn() === topCardColor[0]) {
         cards[0].classList.add('active');
       } else {
         cards[1].classList.add('active');
@@ -247,9 +284,17 @@
     if (game.in_checkmate()) {
       var loserColor = game.turn();
       var winnerColor = loserColor === 'w' ? 'black' : 'white';
-      var winnerLabel = winnerColor === gameConfig.humanColor
-        ? 'You win! 🎉'
-        : 'AI wins!';
+      
+      var winnerLabel;
+      if (gameConfig.playerCount === 1) {
+        winnerLabel = winnerColor === gameConfig.humanColor
+          ? 'You win! 🎉'
+          : 'AI wins!';
+      } else {
+        var winnerPlayer = (winnerColor === gameConfig.player1Color) ? 'Player 1' : 'Player 2';
+        winnerLabel = winnerPlayer + ' wins! 🎉';
+      }
+      
       status = 'Checkmate!\n' + winnerLabel;
     } else if (game.in_draw()) {
       status = 'Game Over\nDraw!';
@@ -306,7 +351,11 @@
 
   function onSquareClick(square) {
     if (game.game_over()) return;
-    if (game.turn() === gameConfig.aiColor[0]) return;
+    
+    // 1-player mode: block clicks during AI's turn
+    if (gameConfig.playerCount === 1 && gameConfig.aiColor && game.turn() === gameConfig.aiColor[0]) {
+      return;
+    }
 
     var piece = game.get(square);
 
@@ -342,7 +391,11 @@
 
       if (!game.game_over()) {
         startTimer();
-        makeAIMove();
+        
+        // Only trigger AI in 1-player mode
+        if (gameConfig.playerCount === 1) {
+          makeAIMove();
+        }
       }
       return;
     }
