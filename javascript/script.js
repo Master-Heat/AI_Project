@@ -5,6 +5,25 @@
  * ──────────────────────────────────────────────────────────────
  */
 
+
+// window.addEventListener('DOMContentLoaded', function() {
+//   // Setup preview board
+//   Chessboard('hero-board', {
+//     draggable: false,
+//     position: 'start',
+//     orientation: 'white',
+//     pieceTheme: function(piece) {
+//       if (typeof chessPiecesSVG !== 'undefined' && chessPiecesSVG[piece]) {
+//         return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(chessPiecesSVG[piece]);
+//       }
+//       return 'img/chesspieces/wikipedia/' + piece + '.png';
+//     }
+//   });
+// });
+  
+
+var playerable = false;
+
 (function() {
   'use strict';
 
@@ -90,7 +109,7 @@
         return 'img/chesspieces/wikipedia/' + piece + '.png';
       }
     };
-
+// * mamange the board inside 
     // Create or reset board
     if (board === null) {
       board = Chessboard('chessboard', config);
@@ -351,6 +370,7 @@
 
   function onSquareClick(square) {
     if (game.game_over()) return;
+    if (!playerable)return;
     
     // 1-player mode: block clicks during AI's turn
     if (gameConfig.playerCount === 1 && gameConfig.aiColor && game.turn() === gameConfig.aiColor[0]) {
@@ -435,3 +455,7 @@
   }
 
 })();
+
+
+
+

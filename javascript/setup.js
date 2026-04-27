@@ -5,6 +5,7 @@
  * ──────────────────────────────────────────────────────────────
  */
 
+
 let playerCount = 1;
 let playerColor = 'black';
 let player2Color = 'white';
@@ -60,6 +61,14 @@ function setTimeControl(time) {
 }
 
 function startGame() {
+  playerable = true;
+
+var gameSetup = document.getElementById('setupPage');
+gameSetup.style.display = 'none';
+
+
+
+
   let gameConfig = {
     playerCount: playerCount,
     timeControl: parseInt(timeControl) * 60,
@@ -116,6 +125,7 @@ function startGame() {
   }
 }
 
+
 // Page navigation
 function showPage(pageId) {
   document.querySelectorAll('.page-view').forEach(page => {
@@ -124,8 +134,14 @@ function showPage(pageId) {
   document.getElementById(pageId).classList.add('active');
 }
 
+
+
 // Initialize on load
 window.addEventListener('DOMContentLoaded', () => {
+
+   initializeGame();
+
+  
   // Player count
   document.querySelectorAll('.player-count').forEach(btn => {
     btn.classList.add(parseInt(btn.dataset.value) === playerCount ? 'btn-selected' : 'btn-unselected');

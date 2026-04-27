@@ -9,8 +9,9 @@
 :root {
   font-size: 16px;
   --light-square: #ffffff;
-  --board-size: 500px;
+  --board-size: 500px ;
   --square-size: calc(var(--board-size) / 8);
+ --dark-square-color: #8B7355;
 }
 
 * {
@@ -30,12 +31,15 @@ body {
 /* PAGE VIEW MANAGEMENT */
 
 .page-view {
-  display: none;
+  /* display: none; */
   width: 100%;
   height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.page-view.active {
+.page-view .active {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -70,7 +74,7 @@ body {
 
 /* Player Card Active State */
 .player-card-ui.active {
-  border-color: #000;
+  border-color:var(--dark-square-color);
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
 }
 
@@ -80,23 +84,23 @@ body {
   padding: 6px;
   background-color: rgb(255, 255, 255);
   color: black;
-  border: 2px solid rgb(189, 189, 189);
+  border: 2px solid var(--light-square);
   border-radius: 4px;
   cursor: pointer;
   /* text-align: center; */
 }
 
 .button:hover {
-  background-color: black;
+  background-color: var(--dark-square-color);
   color: white;
-  border-color: black;
+  border-color: var(--dark-square-color);
 }
 
 .button.btn-selected {
 
-  background-color: black !important;
+  background-color: var(--dark-square-color) !important;
   color: white !important;
-  border-color: black !important;
+  border-color: var(--dark-square-color) !important;
 }
 
 .button.btn-unselected {
@@ -135,6 +139,8 @@ body {
 
 .play-button.expanded {
   background-color: white;
+  border: 2px solid rgb(189, 189, 189);
+
 }
 
 .play-button.expanded:hover {
@@ -142,6 +148,7 @@ body {
   color: black;
   border-color: rgb(189, 189, 189);
   cursor: default;
+
 }
 
 .play-button.expanded .button {
@@ -221,9 +228,9 @@ body {
 
 .config-button:hover,
 .play-start-button:hover {
-  background-color: black !important;
+  background-color: var(--dark-square-color) !important;
   color: white !important;
-  border: solid black 2px !important;
+  border: solid var(--dark-square-color) 2px !important;
   padding: 6px;
 }
 
@@ -237,6 +244,8 @@ body {
 
 #chessboard {
   width: 400px;
+  position: relative;
+  z-index: 1;
 }
 
 .player-info {
@@ -327,11 +336,13 @@ body {
   }
 
   .square.dark , .black-3c85d  {
-    background-image: url('assets/dark-square-black.jpg') ;
+    background-color: var(--dark-square-color);
     background-size: cover ;
     background-position: center ;
   }
-
+.notation-322f9{
+color: #767676;
+}
 
 .piece {
   width: 100%;
@@ -467,4 +478,23 @@ body {
 #chessboard img.piece-417db {
   width: 100%;
   height: 100%;
+}
+
+
+
+
+
+/** add game  board in the setup */
+#setupBoard,
+#chessboard {
+  width: 420px;
+  max-width: 100%;
+  margin: 20px auto;
+}
+
+.setup-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 }

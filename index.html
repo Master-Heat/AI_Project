@@ -13,6 +13,7 @@
 
 <body>
 
+
   <!-- ═══════════════════════════════════════════════════════════════
        SETUP PAGE (Initial View)
        ═══════════════════════════════════════════════════════════════ -->
@@ -20,6 +21,7 @@
     <div class="homepage">
       <div class="homepage buttons">
         <div class="button play-button expanded">
+
           <div class="play-button-text" onclick="openPlayConfig()">Play a Game</div>
           <div class="play-config" id="playConfig">
             <div class="play-config-title">Game Configuration:</div>
@@ -65,7 +67,7 @@
         </div>
       </div>
       <div class="homepage hero">
-        <div id="hero-board"></div>
+        <!-- <div id="hero-board"></div> -->
       </div>
     </div>
   </div>
@@ -74,12 +76,17 @@
        GAME PAGE (Hidden Initially)
        ═══════════════════════════════════════════════════════════════ -->
   <div id="gamePage" class="page-view">
-    <div class="homepage game-active">
-      <div class="homepage buttons game-started-buttons" id="gamePlayerCards">
-        <!-- Player cards will be inserted here dynamically -->
-      </div>
-      <div class="homepage hero game-started-hero">
-        <div id="chessboard"></div>
+    <div class="miangame">
+
+      <div class="homepage game-active">
+        <div class="homepage buttons game-started-buttons" id="gamePlayerCards">
+          <!-- Player cards will be inserted here dynamically -->
+
+
+        </div>
+        <div class="homepage hero game-started-hero">
+          <div id="chessboard"></div>
+        </div>
       </div>
     </div>
 
