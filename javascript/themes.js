@@ -199,3 +199,53 @@ var PIECE_THEMES = {
     black: { primary: '#3d2b1f', secondary: '#5c4333', outline: '#241a13' }
   }
 };
+
+
+
+function updatePicesColor() {
+    // 1. Re-generate the SVG strings based on current variables
+    let chessPiecesSVG = {
+        'bR': makeBlack(rook),
+        'bQ': makeBlack(queen),
+        'bP': makeBlack(pawn),
+        'bN': makeBlack(knight),
+        'bK': makeBlack(king),
+        'bB': makeBlack(bishop),
+        'wR': makeWhite(rook),
+        'wQ': makeWhite(queen),
+        'wP': makeWhite(pawn),
+        'wN': makeWhite(knight),
+        'wK': makeWhite(king),
+        'wB': makeWhite(bishop)
+    };
+
+    // 2. Define the new configuration
+    var config = {
+        draggable: true,
+        position: board ? board.fen() : 'start', // Maintain current position
+        pieceTheme: function(piece) {
+            if (chessPiecesSVG[piece]) {
+                return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(chessPiecesSVG[piece]);
+            }
+            return 'img/chesspieces/wikipedia/' + piece + '.png';
+        }
+    };
+
+    // 3. Re-initialize the board (this triggers the redraw)
+    board = Chessboard('myBoard', config);
+}
+
+
+function changePicesTheme(theme) {
+
+    
+     WHITE_PRIMARY =   theme.white.primary;
+     WHITE_SECONDARY = theme.white.secondary;
+     WHITE_OUTLINE =   theme.white.outline;
+
+    // Black piece colors
+     BLACK_PRIMARY = theme.black.primary;
+     BLACK_SECONDARY = theme.black.secondary;
+     BLACK_OUTLINE = theme.black.outline;
+    updatePicesColor();
+}

@@ -392,7 +392,7 @@ function makeBlack(svgString) {
 
     // 2. Define the new configuration
     var config = {
-        draggable: true,
+        draggable: false,
         position: board ? board.fen() : 'start', // Maintain current position
         pieceTheme: function(piece) {
             if (chessPiecesSVG[piece]) {
@@ -426,21 +426,3 @@ function makeBlack(svgString) {
 //  ****************
 
 
-/**
- * theme.js
- * ─────────────────────────────────────────────────────────────
- * Theme Switcher Logic
- *
- * Strategy
- * ────────
- * Rather than injecting CSS variables that chessboard.js may
- * ignore (it builds inline styles at init-time), we set a
- * data-theme attribute on <body>.  All square colours are then
- * driven by the attribute-scoped CSS rules in style.css, so
- * every board — hero AND live game — updates simultaneously
- * with zero animation delay.
- *
- * CSS variables (--light-square, --dark-square-color) are kept
- * in sync so that the mini-preview squares update too.
- * ─────────────────────────────────────────────────────────────
- */
