@@ -98,17 +98,22 @@ var playerable = false;
     var orientation = gameConfig.humanColor || gameConfig.player1Color || 'white';
 
     // Board config
-    var config = {
-      draggable: false,
-      position: 'start',
-      orientation: orientation,
-      pieceTheme: function(piece) {
-        if (typeof chessPiecesSVG !== 'undefined' && chessPiecesSVG[piece]) {
-          return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(chessPiecesSVG[piece]);
-        }
-        return 'img/chesspieces/wikipedia/' + piece + '.png';
-      }
-    };
+   var config = {
+  draggable: false,
+  position: 'start',
+  pieceTheme: function(piece) {
+    // piece is a string like 'wP', 'bK', etc.
+    
+    if (chessPiecesSVG[piece]) {
+      // If the variable contains the raw <svg>...</svg> string,
+      // we wrap it here so the browser understands it's an image.
+      return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(chessPiecesSVG[piece]);
+    }
+    
+    // Fallback
+    return 'img/chesspieces/wikipedia/' + piece + '.png';
+  }
+};
 // * mamange the board inside 
     // Create or reset board
     if (board === null) {

@@ -13,7 +13,85 @@
 
 <body>
 
+  <!-- Theme Switcher  -->
 
+  <!-- ═══════════════════════════════════════════════════════════════
+     THEME SWITCHER
+     ═══════════════════════════════════════════════════════════════ -->
+  <div class="theme-switcher-wrapper">
+
+    <!-- Trigger Button -->
+    <button class="button theme-trigger-btn" id="themeTriggerBtn">
+      🎨 Board Theme
+    </button>
+
+    <!-- Palette Panel (hidden by default) -->
+    <div class="theme-palette" id="themePalette">
+      <div class="theme-palette-title">Choose a Board Theme</div>
+
+      <div class="theme-swatches">
+
+        <!-- Classic (default) -->
+        <button class="theme-swatch" data-theme="classic" title="Classic">
+          <span class="swatch-light" style="background:#ffffff;"></span>
+          <span class="swatch-dark" style="background:#8B7355;"></span>
+          <span class="swatch-label">Classic</span>
+        </button>
+
+        <!-- Slate -->
+        <button class="theme-swatch" data-theme="slate" title="Slate">
+          <span class="swatch-light" style="background:#d6dfe8;"></span>
+          <span class="swatch-dark" style="background:#4a6fa5;"></span>
+          <span class="swatch-label">Slate</span>
+        </button>
+
+        <!-- Forest -->
+        <button class="theme-swatch" data-theme="forest" title="Forest">
+          <span class="swatch-light" style="background:#edf2e9;"></span>
+          <span class="swatch-dark" style="background:#4a7c59;"></span>
+          <span class="swatch-label">Forest</span>
+        </button>
+
+        <!-- Coral -->
+        <button class="theme-swatch" data-theme="coral" title="Coral">
+          <span class="swatch-light" style="background:#fdf0ec;"></span>
+          <span class="swatch-dark" style="background:#c0614a;"></span>
+          <span class="swatch-label">Coral</span>
+        </button>
+
+        <!-- Midnight -->
+        <button class="theme-swatch" data-theme="midnight" title="Midnight">
+          <span class="swatch-light" style="background:#c8c9d4;"></span>
+          <span class="swatch-dark" style="background:#2c2f4a;"></span>
+          <span class="swatch-label">Midnight</span>
+        </button>
+
+        <!-- Sand -->
+        <button class="theme-swatch" data-theme="sand" title="Sand">
+          <span class="swatch-light" style="background:#f5e6c8;"></span>
+          <span class="swatch-dark" style="background:#b58a3e;"></span>
+          <span class="swatch-label">Sand</span>
+        </button>
+
+      </div>
+
+      <!-- Test Elements -->
+      <div class="theme-test-area">
+        <span class="theme-test-label">Preview:</span>
+        <div class="test-board-mini">
+          <div class="test-sq test-sq-light"></div>
+          <div class="test-sq test-sq-dark"></div>
+          <div class="test-sq test-sq-dark"></div>
+          <div class="test-sq test-sq-light"></div>
+          <div class="test-sq test-sq-light"></div>
+          <div class="test-sq test-sq-dark"></div>
+          <div class="test-sq test-sq-dark"></div>
+          <div class="test-sq test-sq-light"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
   <!-- ═══════════════════════════════════════════════════════════════
        SETUP PAGE (Initial View)
        ═══════════════════════════════════════════════════════════════ -->
@@ -103,6 +181,7 @@
        SCRIPTS
        ═══════════════════════════════════════════════════════════════ -->
 
+  <script src="javascript/SVGhandler.js"></script>
   <!-- Hero board animation -->
   <script src="javascript/hero.js"></script>
 
@@ -126,6 +205,8 @@
 
   <!-- Opening Book -->
   <script src="javascript/openingBook.js"></script>
+  <!-- the themes logic -->
+  <script src="javascript/themes.js"></script>
 
 </body>
 
